@@ -1,0 +1,307 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+}
+
+:root {
+  /* Primary Brand Colors */
+  --primary: #4f9d2f;
+  --primary-deep: #287a38;
+  --primary-light: #78b82a;
+  --primary-subtle: #e8f3df;
+  --primary-foreground: #ffffff;
+
+  /* Accent */
+  --accent: #8fbd24;
+
+  /* Neutrals */
+  --background: #f7f9f3;
+  --surface: #ffffff;
+  --surface-raised: #eef3e9;
+  --ink: #18321f;
+  --ink-muted: #68766b;
+  --border: #dce5d8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #82c53a;
+    --primary-deep: #5eaa35;
+    --primary-light: #b2dc63;
+    --primary-subtle: #1e3d25;
+    --primary-foreground: #0d160f;
+    --accent: #a8ce3c;
+    --background: #0d160f;
+    --surface: #142018;
+    --surface-raised: #1b2b1e;
+    --ink: #f4f8f1;
+    --ink-muted: #a4b2a5;
+    --border: #344837;
+  }
+}
+
+/* Manual dark mode toggle */
+.dark {
+  --primary: #82c53a;
+  --primary-deep: #5eaa35;
+  --primary-light: #b2dc63;
+  --primary-subtle: #1e3d25;
+  --primary-foreground: #0d160f;
+  --accent: #a8ce3c;
+  --background: #0d160f;
+  --surface: #142018;
+  --surface-raised: #1b2b1e;
+  --ink: #f4f8f1;
+  --ink-muted: #a4b2a5;
+  --border: #344837;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-ink);
+}
+
+/* Semantic type-role classes: the actual font swaps with the document
+   language (set via html[lang]) instead of components branching on locale.
+   Fonts are self-hosted via @fontsource (imported in the locale layout) so
+   the build never depends on reaching fonts.googleapis.com at runtime. */
+.font-body {
+  font-family: "Noto Naskh Arabic", serif;
+}
+.font-display {
+  font-family: "Reem Kufi", sans-serif;
+}
+:lang(en) .font-body {
+  font-family: "Inter", sans-serif;
+}
+:lang(en) .font-display {
+  font-family: "Newsreader", serif;
+}
+
+/* Respect reduced-motion preference site-wide. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Hero Animation ─── */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+/* Visible, consistent keyboard focus ring for accessibility. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── NProgress Loading Bar ─── */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: var(--primary);
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px var(--primary), 0 0 5px var(--primary);
+  opacity: 1;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* ─── Site Header ─── */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  width: 100%;
+  background: linear-gradient(135deg, #287a38 0%, #4f9d2f 50%, #91c83a 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(24, 50, 31, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  .site-header {
+    background: linear-gradient(135deg, #12351d 0%, #287a38 45%, #78b82a 100%);
+  }
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4.5rem;
+  padding-inline: 0.75rem;
+  padding-block: 0.1rem;
+  max-width: min(calc(100% - 1.25rem), 72rem);
+  margin-inline: auto;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .site-header-inner {
+    gap: 1.15rem;
+    padding-inline: 1rem;
+  }
+}
+
+/* Brand */
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: none;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+.brand-link:hover { opacity: 0.9; color: white; }
+.brand-word { font-weight: 600; letter-spacing: -0.02em; }
+
+/* Desktop nav */
+.desktop-nav {
+  display: none;
+  flex: 1;
+  align-items: center;
+  gap: 0.1rem 1rem;
+  overflow: auto;
+  scrollbar-width: none;
+}
+.desktop-nav::-webkit-scrollbar { display: none; }
+
+.desktop-nav a {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.925rem;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-block: 0.4rem;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.desktop-nav a:hover,
+.desktop-nav a[aria-current="page"] {
+  color: white;
+  border-bottom-color: var(--accent);
+}
+
+@media (min-width: 768px) {
+  .desktop-nav { display: flex; }
+}
+
+/* Header actions */
+.header-actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.35rem;
+  min-height: 2.35rem;
+  padding: 0.35rem 0.45rem;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.lang-switch {
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  transition: all 0.2s;
+}
+.lang-switch:hover {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ─── Custom Scrollbar for Hadith Collections ─── */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(79, 157, 47, 0.3) rgba(79, 157, 47, 0.05);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(79, 157, 47, 0.05);
+  border-radius: 10px;
+  margin: 0 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, rgba(79, 157, 47, 0.5), rgba(79, 157, 47, 0.7));
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, rgba(79, 157, 47, 0.8), #4f9d2f);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:active {
+  background: #4f9d2f;
+}

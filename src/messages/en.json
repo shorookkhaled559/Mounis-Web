@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "siteName": "Mounis",
+    "title": "Mounis — Your daily companion for reflection and Islamic knowledge",
+    "description": "A modern Arabic platform for reflection, hadith, prayer times, zakat calculation, fatwas, and trustworthy daily content."
+  },
+  "nav": {
+    "home": "Home",
+    "prayer": "Prayer Times & Qibla",
+    "zakat": "Zakat Calculator",
+    "hadith": "Hadith",
+    "thisDay": "On This Day",
+    "fatwas": "Fatwas & Consultations",
+    "about": "About Us",
+    "skipToContent": "Skip to content",
+    "switchLanguage": "العربية",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "search": "Search"
+  },
+  "home": {
+    "eyebrow": "Your daily companion",
+    "heroTitle": "Your daily companion for reflection and Islamic knowledge",
+    "heroDescription": "Mounis is a modern Arabic platform for reflection, hadith, prayer times, zakat calculation, fatwas, and trustworthy daily content.",
+    "quickLinks": {
+      "prayer": "Prayer Times & Qibla",
+      "hadith": "Hadith",
+      "zakat": "Zakat Calculator",
+      "thisDay": "On This Day"
+    },
+    "articleSection": {
+      "eyebrow": "Reflection",
+      "heading": "Recent articles",
+      "viewMore": "View more"
+    },
+    "comments": {
+      "heading": "Comments",
+      "disabled": "Comments aren't open yet. They'll appear here once we enable discussion.",
+      "name": "Name",
+      "comment": "Your comment",
+      "submit": "Submit"
+    },
+    "hadithOfDay": {
+      "eyebrow": "Companion corner",
+      "wirdLabel": "Today's wird",
+      "hadithLabel": "Hadith of the day"
+    },
+    "appTeaser": {
+      "heading": "The Mounis mobile app is coming soon",
+      "description": "We're building a light app for daily reading and tools. Not available to download yet."
+    },
+    "newsletter": {
+      "heading": "Notifications from Mounis",
+      "description": "Leave your email to receive new articles, the daily wird, and app launch news.",
+      "placeholder": "Your email",
+      "submit": "Subscribe"
+    }
+  },
+  "article": {
+    "readMinutes": "{minutes} min read",
+    "publishedOn": "Published {date}",
+    "share": "Share",
+    "copyLink": "Copy link",
+    "save": "Save",
+    "print": "Print",
+    "seeMore": "See more"
+  },
+  "footer": {
+    "tagline": "Your daily companion for reflection and Islamic knowledge",
+    "exploreHeading": "Explore",
+    "aboutHeading": "About",
+    "contact": "Contact us",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "cookies": "Cookies",
+    "note": "Mounis — an independent knowledge platform."
+  },
+  "ads": {
+    "label": "Advertisement",
+    "reserved": "Reserved ad space"
+  },
+  "pages": {
+    "prayer": {
+      "title": "Prayer Times & Qibla",
+      "description": "Enter your city to see the five daily prayer times and the qibla direction."
+    },
+    "zakat": {
+      "title": "Zakat Calculator",
+      "description": "Calculate zakat on your wealth in a few clear steps."
+    },
+    "hadith": {
+      "title": "Hadith",
+      "description": "A curated collection of authenticated prophetic hadith."
+    },
+    "thisDay": {
+      "title": "On This Day",
+      "description": "Moments from Islamic history told for their meaning, not just their date."
+    },
+    "fatwas": {
+      "title": "Fatwas & Consultations",
+      "description": "Trustworthy answers to readers' everyday religious questions."
+    },
+    "about": {
+      "title": "About Us",
+      "description": "Mounis' story, why we built it, and who we are."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "description": "We'd love to hear your questions or feedback."
+    },
+    "privacy": {
+      "title": "Privacy Policy"
+    },
+    "terms": {
+      "title": "Terms of Use"
+    },
+    "cookies": {
+      "title": "Cookies"
+    },
+    "articles": {
+      "title": "Articles"
+    }
+  },
+  "common": {
+    "comingSoon": "This section is being prepared, check back soon.",
+    "backHome": "Back to home"
+  }
+}
