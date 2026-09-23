@@ -3,18 +3,6 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import "../globals.css";
-// Self-hosted fonts (no runtime dependency on fonts.googleapis.com).
-// Only load essential weights: 400 (regular), 600 (semibold), 700 (bold)
-import "@fontsource/reem-kufi/400.css";
-import "@fontsource/noto-naskh-arabic/400.css";
-import "@fontsource/noto-naskh-arabic/600.css";
-import "@fontsource/noto-naskh-arabic/700.css";
-import "@fontsource/newsreader/400.css";
-import "@fontsource/newsreader/600.css";
-import "@fontsource/newsreader/700.css";
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/inter/700.css";
 import { routing, localeDirection, type AppLocale } from "@/i18n/routing";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -101,6 +89,24 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
+        {/* Preload the two most critical fonts so the browser fetches them in
+            parallel with the HTML, before the CSS is parsed. This cuts the
+            font render-blocking chain that was adding ~1350ms on mobile.
+            Only preload arabic subsets — they are used above the fold. */}
+        <link
+          rel="preload"
+          as="font"
+          type="font/woff2"
+          href="/fonts/reem-kufi-arabic-400-normal.woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          as="font"
+          type="font/woff2"
+          href="/fonts/noto-naskh-arabic-arabic-400-normal.woff2"
+          crossOrigin="anonymous"
+        />
         {/* Preload the hero background image so the browser fetches it immediately,
             reducing LCP element render delay. fetchpriority=high ensures it is
             prioritised over other resources discovered later in the page. */}
