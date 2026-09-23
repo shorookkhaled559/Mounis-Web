@@ -1,11 +1,9 @@
-"use client";
-
-import { useLocale } from "next-intl";
+import { getLocale } from "next-intl/server";
 import { Container } from "@/components/ui/container";
 import { Lightbulb } from "lucide-react";
 
-export function DidYouKnow() {
-  const locale = useLocale();
+export async function DidYouKnow() {
+  const locale = await getLocale();
 
   const facts = [
     {
@@ -58,7 +56,7 @@ export function DidYouKnow() {
         {/* Horizontal Scroll Container */}
         <div className="relative">
           {/* Scroll wrapper */}
-          <div className="overflow-x-auto scrollbar-hide">
+          <div className="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex gap-4 pb-2">
               {facts.map((fact, index) => (
                 <div
@@ -83,16 +81,6 @@ export function DidYouKnow() {
           </div>
         </div>
       </Container>
-
-      <style jsx>{`
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </section>
   );
 }

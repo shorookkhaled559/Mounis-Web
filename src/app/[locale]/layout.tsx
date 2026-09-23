@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -20,7 +19,10 @@ import { routing, localeDirection, type AppLocale } from "@/i18n/routing";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/ui/skip-link";
-import { NavigationProgress } from "@/components/navigation-progress";
+import { NavigationProgressLoader } from "@/components/navigation-progress-loader";
+
+// Lazy-load NavigationProgress — nprogress is only relevant after the first
+// page load when the user navigates. No need to block the initial render.
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -99,6 +101,15 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
+        {/* Preload the hero background image so the browser fetches it immediately,
+            reducing LCP element render delay. fetchpriority=high ensures it is
+            prioritised over other resources discovered later in the page. */}
+        <link
+          rel="preload"
+          as="image"
+          href="/_next/image?url=%2Fbrand%2Fheader_background.png&w=1920&q=75"
+          fetchPriority="high"
+        />
         <link rel="icon" href="/favicons/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicons/icon-192.png" type="image/png" sizes="192x192" />
         <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" sizes="180x180" />
@@ -110,9 +121,7 @@ export default async function LocaleLayout({
       </head>
       <body className="font-body antialiased">
         <NextIntlClientProvider>
-          <Suspense fallback={null}>
-            <NavigationProgress />
-          </Suspense>
+          <NavigationProgressLoader />
           <SkipLink />
           <div className="flex min-h-dvh flex-col">
             <SiteHeader />

@@ -1,12 +1,11 @@
-"use client";
-
-import { useLocale } from "next-intl";
+import { getLocale } from "next-intl/server";
 import Image from "next/image";
 import { Container } from "@/components/ui/container";
 import { EnvelopeIcon } from "@heroicons/react/24/outline";
+import { NewsletterForm } from "./newsletter-form";
 
-export function Newsletter() {
-  const locale = useLocale();
+export async function Newsletter() {
+  const locale = await getLocale();
 
   return (
     <section className="py-12 sm:py-16 relative overflow-hidden">
@@ -71,28 +70,10 @@ export function Newsletter() {
                 </div>
 
                 {/* Form */}
-                <form
-                  className="flex flex-col sm:flex-row gap-2"
-                  onSubmit={(event) => event.preventDefault()}
-                >
-                  <input
-                    id="newsletter-email"
-                    type="email"
-                    required
-                    placeholder={
-                      locale === "ar"
-                        ? "بريدك الإلكتروني"
-                        : "Your email address"
-                    }
-                    className="flex-1 rounded-full border border-ink/10 bg-white/60 px-5 py-2.5 text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all"
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:bg-primary-deep whitespace-nowrap"
-                  >
-                    {locale === "ar" ? "اشترك" : "Subscribe"}
-                  </button>
-                </form>
+                <NewsletterForm
+                  placeholder={locale === "ar" ? "بريدك الإلكتروني" : "Your email address"}
+                  buttonLabel={locale === "ar" ? "اشترك" : "Subscribe"}
+                />
               </div>
             </div>
           </div>

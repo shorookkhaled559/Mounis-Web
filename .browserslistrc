@@ -1,0 +1,8 @@
+# Target modern evergreen browsers only.
+# This prevents the bundler from transpiling ES2020+ features
+# (Array.prototype.at, Object.fromEntries, etc.) that are already
+# natively supported, eliminating unnecessary legacy polyfills (~14 KiB).
+last 2 Chrome versions
+last 2 Firefox versions
+last 2 Safari versions
+last 2 Edge versions

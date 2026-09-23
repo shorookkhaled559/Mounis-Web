@@ -2,12 +2,21 @@
 
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { Link, usePathname } from "@/i18n/navigation";
 import { primaryNav } from "@/lib/nav";
 import { LanguageSwitch } from "./language-switch";
 import { SearchButton } from "./search-button";
-import { MobileNav } from "./mobile-nav";
 import { ThemeToggle } from "./theme-toggle";
+
+// Lazy-load MobileNav — Radix Dialog (~20 KB) is never needed on initial render.
+// It only becomes relevant when the user taps the hamburger menu on mobile.
+const MobileNav = dynamic(() => import("./mobile-nav").then((m) => m.MobileNav), {
+  ssr: false,
+  loading: () => (
+    <div className="w-10 h-10 md:hidden" aria-hidden="true" />
+  ),
+});
 
 export function SiteHeader() {
   const t = useTranslations("nav");
