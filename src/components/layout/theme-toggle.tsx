@@ -9,17 +9,16 @@ export function ThemeToggle() {
 
   useEffect(() => {
     setMounted(true);
-    // Check if user has a saved preference
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.classList.toggle("dark", savedTheme === "dark");
+      document.documentElement.classList.toggle("light", savedTheme === "light");
     } else {
-      // Check system preference
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       const systemTheme = prefersDark ? "dark" : "light";
       setTheme(systemTheme);
-      document.documentElement.classList.toggle("dark", prefersDark);
+      // Don't set explicit class — let the CSS @media query handle it
     }
   }, []);
 
@@ -27,7 +26,9 @@ export function ThemeToggle() {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
+    // Always set BOTH classes explicitly so CSS @media query is overridden
     document.documentElement.classList.toggle("dark", newTheme === "dark");
+    document.documentElement.classList.toggle("light", newTheme === "light");
   };
 
   // Don't render anything until mounted (prevents hydration mismatch)
