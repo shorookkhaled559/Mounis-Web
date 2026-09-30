@@ -48,7 +48,8 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
       if (raw === null) return;
       setHasOrientation(true);
 
-      // Direction the needle should point = qibla bearing − device heading
+      // needle must point at qiblaDeg in world space
+      // screen rotation = qiblaDeg - deviceHeading
       const target = qiblaDeg - raw;
 
       // Shortest-path: keep accumulated angle within ±180° of previous
@@ -118,7 +119,22 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
     );
   }, [isArabic, startOrientation]);
 
-  // ── Compass ring: 12 tick marks like a clock ───────────────────────────────
+  // ── Angles ────────────────────────────────────────────────────────────────
+  // needleAngle  = angle the NEEDLE rotates to (relative to screen top)
+  //              = qiblaDeg - deviceHeading
+  //   → when device points North (heading=0): needle points to qiblaDeg
+  //   → when device rotates clockwise: needle rotates counter-clockwise to
+  //     compensate, keeping it pointing at Mecca in real-world space
+  //
+  // kaabaAngle   = FIXED position on the ring = always qiblaDeg from North
+  //   → stays at the same spot on the compass face regardless of device
+
+  const kaabaAngleRad = (qiblaDeg * Math.PI) / 180;
+  const kaabaR = 108;
+  const kaabaX = 128 + kaabaR * Math.sin(kaabaAngleRad);
+  const kaabaY = 128 - kaabaR * Math.cos(kaabaAngleRad);
+
+  // Tick marks
   const ticks = Array.from({ length: 60 }, (_, i) => {
     const isMajor = i % 5 === 0;
     const angle = (i * 6 * Math.PI) / 180;
@@ -126,12 +142,6 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
     const r2 = 120;
     return { angle, isMajor, r1, r2 };
   });
-
-  // Kaaba position on ring edge (top = 0°, clockwise)
-  const kaabaAngle = ((displayAngle) * Math.PI) / 180;
-  const kaabaR = 108;
-  const kaabaX = 128 + kaabaR * Math.sin(kaabaAngle);
-  const kaabaY = 128 - kaabaR * Math.cos(kaabaAngle);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-5 h-full">
@@ -206,7 +216,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
               </text>
             ))}
 
-            {/* ── Needle ── */}
+            {/* ── Needle (rotates with device) ── */}
             <g
               style={{
                 transformOrigin: "128px 128px",
@@ -228,17 +238,17 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
               <circle cx="128" cy="128" r="6"
                 fill="white" stroke={status === "active" ? "#e53935" : "#cccccc"} strokeWidth="2"
               />
-
-              {/* Dashed line from center to Kaaba icon position */}
-              {status === "active" && (
-                <line
-                  x1="128" y1="128"
-                  x2={kaabaX} y2={kaabaY}
-                  stroke="#e53935" strokeWidth="1.5"
-                  strokeDasharray="4 3" opacity="0.6"
-                />
-              )}
             </g>
+
+            {/* ── Dashed line: center → Kaaba (fixed, not rotating) ── */}
+            {status === "active" && (
+              <line
+                x1="128" y1="128"
+                x2={kaabaX} y2={kaabaY}
+                stroke="#e53935" strokeWidth="1.5"
+                strokeDasharray="4 3" opacity="0.5"
+              />
+            )}
 
             {/* ── Kaaba icon on ring edge ── */}
             {status === "active" && (
