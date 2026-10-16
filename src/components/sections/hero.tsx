@@ -8,7 +8,7 @@ export async function Hero() {
   const locale = await getLocale();
 
   return (
-    <section className="relative flex min-h-[80svh] items-center overflow-hidden">
+    <section className="relative flex min-h-[50svh] sm:min-h-[70svh] lg:min-h-[80svh] items-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -16,7 +16,7 @@ export async function Hero() {
           alt=""
           fill
           priority
-          className="object-cover"
+          className="object-cover object-center"
           quality={100}
         />
         {/* Overlay for better text readability */}

@@ -8,14 +8,14 @@ export async function Newsletter() {
   const locale = await getLocale();
 
   return (
-    <section className="py-12 sm:py-16 relative overflow-hidden">
+    <section className="py-8 sm:py-12 md:py-16 relative overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
           src="/brand/subscribe_background.png"
           alt=""
           fill
-          className="object-cover"
+          className="object-cover object-right md:object-center"
           quality={100}
         />
       </div>
