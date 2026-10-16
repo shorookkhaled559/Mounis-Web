@@ -1,4 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
+import type { Metadata } from "next";
+import { buildAlternates } from "@/lib/page-metadata";
 import { Hero } from "@/components/sections/hero";
 import { DailyArticle } from "@/components/sections/daily-article";
 import { Categories } from "@/components/sections/categories";
@@ -7,6 +9,11 @@ import { Newsletter } from "@/components/sections/newsletter";
 import { DidYouKnow } from "@/components/sections/did-you-know";
 import { CTASection } from "@/components/sections/cta-section";
 import { articles, getLatestArticles } from "@/lib/data/articles";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return { alternates: buildAlternates(locale, "") };
+}
 
 export default async function HomePage({
   params,

@@ -20,7 +20,7 @@ export function MobileNav() {
         <button
           type="button"
           aria-label={t("openMenu")}
-          className="inline-flex items-center justify-center rounded-md p-2 text-white md:hidden hover:bg-white/10 transition-colors"
+          className="inline-flex items-center justify-center rounded-md p-2 text-white lg:hidden hover:bg-white/10 transition-colors"
         >
           <Menu aria-hidden="true" className="h-6 w-6 text-white" />
         </button>

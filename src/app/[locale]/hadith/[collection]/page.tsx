@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { getCollection } from "@/lib/hadith";
 import { BookOpen, User } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { buildAlternates } from "@/lib/page-metadata";
 
 export async function generateMetadata({
   params,
@@ -25,6 +26,7 @@ export async function generateMetadata({
     description: locale === "ar" 
       ? `${collection.collection.author_ar} - ${collection.books.length} كتاب`
       : `${collection.collection.author_en} - ${collection.books.length} books`,
+    alternates: buildAlternates(locale, `/hadith/${collectionId}`),
   };
 }
 
@@ -60,7 +62,8 @@ export default async function CollectionPage({
           href="/hadith"
           className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-primary mb-4"
         >
-          ← {isArabic ? "العودة إلى المجموعات" : "Back to Collections"}
+          <span aria-hidden="true" className="rtl:rotate-180">←</span>
+          {isArabic ? "العودة إلى المجموعات" : "Back to Collections"}
         </Link>
         <h1 className="text-3xl font-bold text-ink mb-2">{name}</h1>
         <div className="flex flex-wrap items-center gap-4 text-ink-muted">

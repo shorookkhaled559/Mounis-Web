@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+/* Make Tailwind's `dark:` variant follow the .dark class (not the OS setting) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ─── Self-hosted fonts ───────────────────────────────────────────────────────
    Declared directly here (not via @fontsource imports in layout.tsx) so that
@@ -99,15 +103,20 @@
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
   --color-primary: var(--primary);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-light: var(--primary-light);
+  --color-primary-subtle: var(--primary-subtle);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
   --color-border: var(--border);
 }
 
 :root {
+  color-scheme: light;
   /* Primary Brand Colors */
   --primary: #4f9d2f;
   --primary-deep: #287a38;
@@ -127,25 +136,9 @@
   --border: #dce5d8;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --primary: #82c53a;
-    --primary-deep: #5eaa35;
-    --primary-light: #b2dc63;
-    --primary-subtle: #1e3d25;
-    --primary-foreground: #0d160f;
-    --accent: #a8ce3c;
-    --background: #0d160f;
-    --surface: #142018;
-    --surface-raised: #1b2b1e;
-    --ink: #f4f8f1;
-    --ink-muted: #a4b2a5;
-    --border: #344837;
-  }
-}
-
-/* Manual dark mode toggle */
+/* Dark palette: applied ONLY via the .dark class (set by the init script / toggle) */
 .dark {
+  color-scheme: dark;
   --primary: #82c53a;
   --primary-deep: #5eaa35;
   --primary-light: #b2dc63;
@@ -161,8 +154,8 @@
 }
 
 body {
-  background: var(--color-background);
-  color: var(--color-ink);
+  background: var(--background);
+  color: var(--ink);
 }
 
 /* Semantic type-role classes: the actual font swaps with the document
@@ -252,10 +245,8 @@ body {
   box-shadow: 0 2px 8px rgba(24, 50, 31, 0.18);
 }
 
-@media (prefers-color-scheme: dark) {
-  .site-header {
-    background: linear-gradient(135deg, #12351d 0%, #287a38 45%, #78b82a 100%);
-  }
+.dark .site-header {
+  background: linear-gradient(135deg, #12351d 0%, #287a38 45%, #78b82a 100%);
 }
 
 .site-header-inner {
@@ -319,7 +310,7 @@ body {
   border-bottom-color: var(--accent);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .desktop-nav { display: flex; }
 }
 

@@ -2,7 +2,7 @@ import { useLocale } from "next-intl";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Container } from "@/components/ui/container";
-import { Clock, ArrowLeft } from "lucide-react";
+import { Clock, ArrowRight } from "lucide-react";
 import type { Article } from "@/lib/data/articles";
 
 interface FeaturedArticlesProps {
@@ -25,7 +25,7 @@ export function FeaturedArticles({ articles }: FeaturedArticlesProps) {
             className="text-sm font-medium text-primary hover:text-primary-deep transition-colors flex items-center gap-1"
           >
             {locale === "ar" ? "عرض المزيد" : "View More"}
-            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+            <ArrowRight aria-hidden="true" className="w-4 h-4 rtl:rotate-180" />
           </Link>
         </div>
 

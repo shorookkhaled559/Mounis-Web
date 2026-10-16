@@ -48,14 +48,14 @@ export function DailyArticle({ articles }: DailyArticleProps) {
               className="w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface-raised hover:border-primary transition-all flex items-center justify-center group"
               aria-label={locale === "ar" ? "السابق" : "Previous"}
             >
-              <ChevronRight className="w-5 h-5 text-ink-muted group-hover:text-primary" />
+              <ChevronLeft aria-hidden="true" className="w-5 h-5 text-ink-muted group-hover:text-primary rtl:rotate-180" />
             </button>
             <button
               onClick={handleNext}
               className="w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface-raised hover:border-primary transition-all flex items-center justify-center group"
               aria-label={locale === "ar" ? "التالي" : "Next"}
             >
-              <ChevronLeft className="w-5 h-5 text-ink-muted group-hover:text-primary" />
+              <ChevronRight aria-hidden="true" className="w-5 h-5 text-ink-muted group-hover:text-primary rtl:rotate-180" />
             </button>
           </div>
         </div>
@@ -118,7 +118,7 @@ export function DailyArticle({ articles }: DailyArticleProps) {
               <div className="mt-6">
                 <span className="inline-flex items-center gap-2 text-sm font-medium text-primary group-hover:gap-3 transition-all">
                   {locale === "ar" ? "اقرأ المقالة" : "Read Article"}
-                  <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+                  <ChevronRight aria-hidden="true" className="w-4 h-4 rtl:rotate-180" />
                 </span>
               </div>
             </div>

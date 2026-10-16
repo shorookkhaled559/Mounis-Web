@@ -1,15 +1,14 @@
-import { getLocale, getTranslations } from "next-intl/server";
+import { getLocale } from "next-intl/server";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Container } from "@/components/ui/container";
 import { BookOpen, Search, Info } from "lucide-react";
 
 export async function Hero() {
-  const t = await getTranslations("home");
   const locale = await getLocale();
 
   return (
-    <section className="relative overflow-hidden h-[80vh] flex items-center">
+    <section className="relative flex min-h-[80svh] items-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -70,7 +69,7 @@ export async function Hero() {
               className="inline-flex items-center gap-1.5 rounded-full border-2 border-white/30 bg-white/10 backdrop-blur-sm px-4 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm font-medium text-white transition-all hover:border-white/50 hover:bg-white/20"
             >
               <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              {locale === "ar" ? "تصفح المقالات" : "Browse Articles"}
+              {locale === "ar" ? "تصفح الأحاديث" : "Browse Hadiths"}
             </Link>
             
             <Link

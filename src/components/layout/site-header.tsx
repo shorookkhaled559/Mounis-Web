@@ -14,7 +14,7 @@ import { ThemeToggle } from "./theme-toggle";
 const MobileNav = dynamic(() => import("./mobile-nav").then((m) => m.MobileNav), {
   ssr: false,
   loading: () => (
-    <div className="w-10 h-10 md:hidden" aria-hidden="true" />
+    <div className="w-10 h-10 lg:hidden" aria-hidden="true" />
   ),
 });
 
@@ -53,7 +53,7 @@ export function SiteHeader() {
         {/* Actions */}
         <div className="header-actions">
           <ThemeToggle />
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             <SearchButton />
             <LanguageSwitch />
           </div>

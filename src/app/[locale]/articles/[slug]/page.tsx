@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 import { AdSlot } from "@/components/ui/ad-slot";
 import { articles, getArticleBySlug } from "@/lib/data/articles";
 import { routing } from "@/i18n/routing";
+import { buildAlternates } from "@/lib/page-metadata";
 
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
@@ -23,19 +24,14 @@ export async function generateMetadata({
   if (!article) return {};
 
   const lang = locale as "ar" | "en";
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com";
-  const articleUrl = `${siteUrl}/${locale}/articles/${slug}`;
 
   return {
     title: article.title[lang],
     description: article.excerpt[lang],
-    alternates: {
-      canonical: articleUrl,
-    },
+    alternates: buildAlternates(locale, `/articles/${slug}`),
     openGraph: {
       title: article.title[lang],
       description: article.excerpt[lang],
-      url: articleUrl,
       type: "article",
       publishedTime: article.publishedAt,
       images: [

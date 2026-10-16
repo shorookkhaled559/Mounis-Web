@@ -1,5 +1,5 @@
 import { Link } from "@/i18n/navigation";
-import { ChevronLeft, BookOpen } from "lucide-react";
+import { ChevronRight, BookOpen } from "lucide-react";
 import type { CollectionSummary } from "@/types/hadith";
 import Image from "next/image";
 
@@ -76,8 +76,8 @@ export function HadithCollectionCard({
           {/* CTA Button */}
           <div className="flex items-center justify-between text-ink text-sm">
             <span>{isArabic ? "تصفح الكتاب" : "Browse Book"}</span>
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-              <ChevronLeft className={`w-4 h-4 ${isArabic ? "" : "rotate-180"}`} />
+            <div className="w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+              <ChevronRight aria-hidden="true" className="w-4 h-4 rtl:rotate-180" />
             </div>
           </div>
         </div>

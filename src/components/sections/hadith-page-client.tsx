@@ -54,19 +54,19 @@ export function HadithPageClient({ collections, locale }: HadithPageClientProps)
         <Container className="relative py-12 md:py-16">
           <div className="max-w-3xl mx-auto">
             {/* Breadcrumb */}
-            <div className={`flex items-center gap-2 text-sm text-gray-700 my-4 ${isArabic ? 'justify-end flex-row-reverse' : 'justify-start'}`}>
-              <span className="text-primary font-medium">{isArabic ? 'الأحاديث' : 'Hadiths'}</span>
-              <span>•</span>
+            <nav aria-label="breadcrumb" className="my-4 flex items-center gap-2 text-sm text-ink-muted">
+              <span className="font-medium text-primary">{isArabic ? 'الأحاديث' : 'Hadiths'}</span>
+              <span aria-hidden="true">•</span>
               <span>{isArabic ? 'الرئيسية' : 'Home'}</span>
-            </div>
+            </nav>
 
             {/* Title */}
-            <h1 className={`font-display text-4xl md:text-5xl font-bold text-primary-deep mb-3 ${isArabic ? 'text-right' : 'text-left'}`}>
+            <h1 className="font-display text-4xl md:text-5xl font-bold text-primary-deep mb-3">
               {isArabic ? 'الأحاديث' : 'Hadiths'}
             </h1>
 
             {/* Description */}
-            <p className={`text-lg text-gray-700 mb-8 ${isArabic ? 'text-right' : 'text-left'}`}>
+            <p className="text-lg text-ink-muted mb-8">
               {isArabic 
                 ? 'مجموعة مختارة من الأحاديث النبوية الشريفة من أشهر المصادر'
                 : 'A curated collection of authentic prophetic hadiths from renowned sources'}
@@ -74,14 +74,14 @@ export function HadithPageClient({ collections, locale }: HadithPageClientProps)
 
             {/* Search Box */}
             <div className="relative">
+              <Search aria-hidden="true" className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-muted" />
               <input
-                type="text"
+                type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={isArabic ? 'ابحث في أي الأحاديث أو اسم الكتاب ...' : 'Search hadiths or book name...'}
-                className={`w-full px-6 py-4 ${isArabic ? 'pr-14 text-right' : 'pl-14 text-left'} rounded-lg bg-white shadow-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/50 text-ink placeholder:text-ink-muted`}
+                placeholder={isArabic ? 'ابحث في نصوص الأحاديث أو اسم الكتاب ...' : 'Search hadith text or book name...'}
+                className="w-full rounded-lg border border-border bg-surface py-4 ps-12 pe-4 text-ink shadow-md placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
-              <Search className={`absolute ${isArabic ? 'right-5' : 'left-5'} top-1/2 -translate-y-1/2 w-5 h-5 text-ink-muted`} />
             </div>
           </div>
         </Container>
