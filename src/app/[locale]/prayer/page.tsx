@@ -1,8 +1,8 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/page-metadata";
-import { PageHero } from "@/components/sections/page-hero";
-import { StubNotice } from "@/components/sections/stub-notice";
+import { HadithStyleHero } from "@/components/sections/hadith-style-hero";
+import { PrayerSection } from "@/components/sections/prayer-section";
 
 export async function generateMetadata({
   params,
@@ -20,18 +20,19 @@ export default async function Page({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  
-  // Add artificial delay in development to see loading states
-  if (process.env.NODE_ENV === "development") {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-  }
-  
+
   const t = await getTranslations({ locale, namespace: "pages.prayer" });
+  const isArabic = locale === "ar";
 
   return (
     <>
-      <PageHero title={t("title")} description={t("description")} />
-      <StubNotice />
+      <HadithStyleHero
+        title={t("title")}
+        description={t("description")}
+        breadcrumb={isArabic ? "مواقيت الصلاة والقبلة" : "Prayer & Qibla"}
+        locale={locale}
+      />
+      <PrayerSection locale={locale} />
     </>
   );
 }
