@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Container } from "@/components/ui/container";
 
 interface HadithStyleHeroProps {
@@ -16,15 +17,21 @@ export function HadithStyleHero({
   const isArabic = locale === "ar";
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative overflow-hidden min-h-[40svh] sm:min-h-[50svh] md:min-h-[60svh] flex items-center">
       {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-bottom bg-no-repeat"
-        style={{ backgroundImage: "url(/hadiths/hadith.png)" }}
-      />
+      <div className="absolute inset-0">
+        <Image
+          src="/hadiths/hadith.png"
+          alt=""
+          fill
+          priority
+          className="object-cover object-left md:object-center"
+          quality={100}
+        />
+      </div>
 
       {/* Content */}
-      <Container className="relative py-12 md:py-16">
+      <Container className="relative z-10 py-8 md:py-12">
         <div className="max-w-3xl mx-auto">
           {/* Breadcrumb */}
           <div
