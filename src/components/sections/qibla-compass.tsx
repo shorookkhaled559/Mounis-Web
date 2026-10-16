@@ -2,23 +2,86 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MapPin, Loader2, AlertCircle } from "lucide-react";
+import geomagnetism from "geomagnetism";
 
 // Kaaba coordinates
 const KAABA_LAT = 21.4225;
 const KAABA_LNG = 39.8262;
 
+// ── Math helpers ─────────────────────────────────────────────────────────────
+const toRad = (d: number) => (d * Math.PI) / 180;
+const toDeg = (r: number) => (r * 180) / Math.PI;
+const norm360 = (d: number) => ((d % 360) + 360) % 360;
+// signed shortest difference a - b in the range [-180, 180)
+const angleDiff = (a: number, b: number) => norm360(a - b + 180) - 180;
+
+/** Initial great-circle bearing from (lat,lng) to the Kaaba, from TRUE north. */
 function calcQibla(lat: number, lng: number): number {
-  const φ1 = (lat * Math.PI) / 180;
-  const φ2 = (KAABA_LAT * Math.PI) / 180;
-  const Δλ = ((KAABA_LNG - lng) * Math.PI) / 180;
+  const φ1 = toRad(lat);
+  const φ2 = toRad(KAABA_LAT);
+  const Δλ = toRad(KAABA_LNG - lng);
   const y = Math.sin(Δλ) * Math.cos(φ2);
   const x =
     Math.cos(φ1) * Math.sin(φ2) -
     Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+  return norm360(toDeg(Math.atan2(y, x)));
+}
+
+/** Magnetic declination (degrees, east positive) at a location. */
+function getDeclination(lat: number, lng: number): number {
+  try {
+    return geomagnetism.model().point([lat, lng]).decl;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Compass heading (clockwise from north, 0-360) from alpha/beta/gamma.
+ *
+ * The classic W3C formula gives the direction the BACK of the phone points to,
+ * and breaks (returns 0) when the phone is flat. A compass is usually held flat
+ * or tilted, so we compute both:
+ *   - "top edge" direction  → good when the phone is flat / slightly tilted
+ *   - "back camera" direction → good when the phone is held upright
+ * and use whichever has the bigger horizontal component (they agree in between).
+ */
+function headingFromEuler(
+  alpha: number,
+  beta: number,
+  gamma: number,
+  screenAngle: number
+): number {
+  const a = toRad(alpha);
+  const b = toRad(beta);
+  const g = toRad(gamma);
+  const cA = Math.cos(a), sA = Math.sin(a);
+  const cB = Math.cos(b), sB = Math.sin(b);
+  const cG = Math.cos(g), sG = Math.sin(g);
+
+  // device +Y axis (top edge) projected on the ground: (East, North)
+  const topE = -cB * sA;
+  const topN = cA * cB;
+  // device -Z axis (back of the phone) projected on the ground
+  const backE = -(cA * sG + cG * sA * sB);
+  const backN = -(sA * sG - cA * cG * sB);
+
+  if (Math.hypot(topE, topN) >= Math.hypot(backE, backN)) {
+    // flat mode: the "forward" direction is the top of the SCREEN, which depends
+    // on whether the phone is in portrait or landscape
+    return norm360(toDeg(Math.atan2(topE, topN)) + screenAngle);
+  }
+  return norm360(toDeg(Math.atan2(backE, backN)));
 }
 
 type Status = "idle" | "loading" | "active" | "error";
+type IOSOrientationEvent = DeviceOrientationEvent & {
+  webkitCompassHeading?: number;
+  webkitCompassAccuracy?: number;
+};
+type IOSDeviceOrientation = {
+  requestPermission?: () => Promise<"granted" | "denied">;
+};
 
 interface QiblaCompassProps {
   locale: string;
@@ -29,79 +92,143 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
 
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [qiblaDeg, setQiblaDeg] = useState(0);
+  const [qiblaDeg, setQiblaDeg] = useState(0); // from TRUE north
+  const [declination, setDeclination] = useState(0);
 
-  // Smoothed needle angle (accumulated to avoid wrap-around jumps)
-  const needleRef = useRef(0);
-  const [displayAngle, setDisplayAngle] = useState(0);
-
-  // ── DeviceOrientation ──────────────────────────────────────────────────────
+  // sensor state
+  const [sensorOn, setSensorOn] = useState(false);
   const [hasOrientation, setHasOrientation] = useState<boolean | null>(null);
+  const [needsCalibration, setNeedsCalibration] = useState(false);
+  const [dialAngle, setDialAngle] = useState(0); // accumulated CSS rotation of the dial
+  const [aligned, setAligned] = useState(false);
 
-  const handleOrientation = useCallback(
-    (e: DeviceOrientationEvent) => {
-      const raw =
-        (e as DeviceOrientationEvent & { webkitCompassHeading?: number })
-          .webkitCompassHeading ??
-        (e.alpha !== null ? (360 - e.alpha) % 360 : null);
-
-      if (raw === null) return;
-      setHasOrientation(true);
-
-      // needle must point at qiblaDeg in world space
-      // screen rotation = qiblaDeg - deviceHeading
-      const target = qiblaDeg - raw;
-
-      // Shortest-path: keep accumulated angle within ±180° of previous
-      let diff = ((target - needleRef.current) % 360 + 540) % 360 - 180;
-      needleRef.current = needleRef.current + diff;
-      setDisplayAngle(needleRef.current);
-    },
-    [qiblaDeg]
-  );
-
-  const startOrientation = useCallback(async () => {
-    const DevOri = DeviceOrientationEvent as unknown as {
-      requestPermission?: () => Promise<"granted" | "denied">;
-    };
-    if (typeof DevOri.requestPermission === "function") {
-      const perm = await DevOri.requestPermission();
-      if (perm !== "granted") return;
-    }
-    window.addEventListener("deviceorientation", handleOrientation, true);
-    // After 1 second, if no orientation data received → device has no sensor
-    setTimeout(() => {
-      setHasOrientation((prev) => (prev === null ? false : prev));
-    }, 1000);
-  }, [handleOrientation]);
+  // Refs hold the latest values so the event listener never goes stale.
+  const declinationRef = useRef(0);
+  const qiblaRef = useRef(0);
+  const smoothRef = useRef<{ x: number; y: number } | null>(null);
+  const dialRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const alignedRef = useRef(false);
 
   useEffect(() => {
-    return () => {
-      window.removeEventListener("deviceorientation", handleOrientation, true);
-    };
-  }, [handleOrientation]);
+    declinationRef.current = declination;
+    qiblaRef.current = qiblaDeg;
+  }, [declination, qiblaDeg]);
 
-  // ── Geolocation ────────────────────────────────────────────────────────────
-  const requestLocation = useCallback(() => {
+  // ── Device orientation listener ──────────────────────────────────────────
+  // Subscribed ONCE when sensorOn flips to true. It reads everything from refs,
+  // so it never needs to be re-created (this was the original bug).
+  useEffect(() => {
+    if (!sensorOn) return;
+
+    // Android Chrome exposes magnetic-north-referenced data on a separate event.
+    const useAbsolute = "ondeviceorientationabsolute" in window;
+    const eventName = useAbsolute ? "deviceorientationabsolute" : "deviceorientation";
+
+    const onOrientation = (e: Event) => {
+      const ev = e as IOSOrientationEvent;
+      let magHeading: number | null = null;
+
+      if (typeof ev.webkitCompassHeading === "number") {
+        // iOS: already a compass heading (tilt compensated)
+        magHeading = ev.webkitCompassHeading;
+        const acc = ev.webkitCompassAccuracy;
+        setNeedsCalibration(typeof acc === "number" && (acc < 0 || acc > 25));
+      } else if (
+        ev.alpha !== null && ev.beta !== null && ev.gamma !== null &&
+        (ev.absolute || useAbsolute)
+      ) {
+        // Android: compute from Euler angles, then fix for screen rotation
+        const screenAngle = window.screen?.orientation?.angle ?? 0;
+        magHeading = headingFromEuler(ev.alpha, ev.beta, ev.gamma, screenAngle);
+      }
+
+      if (magHeading === null) return; // relative-only sensor → can't be trusted
+      setHasOrientation(true);
+
+      // magnetic → true north
+      const trueHeading = norm360(magHeading + declinationRef.current);
+
+      // low-pass filter on the unit circle (no 359°→0° glitch)
+      const r = toRad(trueHeading);
+      const k = 0.2;
+      const prev = smoothRef.current ?? { x: Math.cos(r), y: Math.sin(r) };
+      const sm = {
+        x: prev.x + k * (Math.cos(r) - prev.x),
+        y: prev.y + k * (Math.sin(r) - prev.y),
+      };
+      smoothRef.current = sm;
+      const smoothHeading = norm360(toDeg(Math.atan2(sm.y, sm.x)));
+
+      // throttle React updates to one per animation frame
+      if (rafRef.current !== null) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        // dial rotates by -heading; accumulate along the shortest path
+        const target = -smoothHeading;
+        dialRef.current += angleDiff(target, dialRef.current);
+        setDialAngle(dialRef.current);
+
+        const isAligned = Math.abs(angleDiff(qiblaRef.current, smoothHeading)) <= 3;
+        if (isAligned !== alignedRef.current) {
+          alignedRef.current = isAligned;
+          setAligned(isAligned);
+          if (isAligned && "vibrate" in navigator) navigator.vibrate(60);
+        }
+      });
+    };
+
+    window.addEventListener(eventName, onOrientation, true);
+    // no data after 1.5s → no usable sensor (desktop / unsupported)
+    const timer = setTimeout(() => setHasOrientation((p) => (p === null ? false : p)), 1500);
+
+    return () => {
+      window.removeEventListener(eventName, onOrientation, true);
+      clearTimeout(timer);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    };
+  }, [sensorOn]);
+
+  // ── Click handler: permission FIRST (iOS needs a direct user gesture) ──────
+  const requestLocation = useCallback(async () => {
+    // 1) iOS 13+: requestPermission must be called synchronously inside the click,
+    //    BEFORE any other await / callback, otherwise Safari rejects it.
+    const DevOri = (typeof DeviceOrientationEvent !== "undefined"
+      ? DeviceOrientationEvent
+      : undefined) as unknown as IOSDeviceOrientation | undefined;
+
+    let sensorAllowed = true;
+    if (DevOri && typeof DevOri.requestPermission === "function") {
+      try {
+        sensorAllowed = (await DevOri.requestPermission()) === "granted";
+      } catch {
+        sensorAllowed = false;
+      }
+    }
+
+    // 2) Location
     if (!navigator.geolocation) {
       setStatus("error");
-      setErrorMsg(
-        isArabic
-          ? "المتصفح لا يدعم تحديد الموقع"
-          : "Geolocation not supported"
-      );
+      setErrorMsg(isArabic ? "المتصفح لا يدعم تحديد الموقع" : "Geolocation not supported");
       return;
     }
     setStatus("loading");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const deg = calcQibla(coords.latitude, coords.longitude);
-        setQiblaDeg(Math.round(deg));
-        // Set initial static needle before orientation kicks in
-        needleRef.current = deg;
-        setDisplayAngle(deg);
+        const decl = getDeclination(coords.latitude, coords.longitude);
+        declinationRef.current = decl;
+        qiblaRef.current = deg;
+        setDeclination(decl);
+        setQiblaDeg(deg);
         setStatus("active");
-        startOrientation();
+        if (sensorAllowed) {
+          setHasOrientation(null);
+          setSensorOn(true);
+        } else {
+          setHasOrientation(false);
+        }
       },
       (err) => {
         setStatus("error");
@@ -115,22 +242,19 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
             : "Could not get your location. Please try again."
         );
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [isArabic, startOrientation]);
+  }, [isArabic]);
 
-  // ── Angles ────────────────────────────────────────────────────────────────
-  // needleAngle  = angle the NEEDLE rotates to (relative to screen top)
-  //              = qiblaDeg - deviceHeading
-  //   → when device points North (heading=0): needle points to qiblaDeg
-  //   → when device rotates clockwise: needle rotates counter-clockwise to
-  //     compensate, keeping it pointing at Mecca in real-world space
-  //
-  // kaabaAngle   = FIXED position on the ring = always qiblaDeg from North
-  //   → stays at the same spot on the compass face regardless of device
-
-  const kaabaAngleRad = (qiblaDeg * Math.PI) / 180;
-  const kaabaR = 108;
+  // ── Geometry ──────────────────────────────────────────────────────────────
+  // The whole dial (ticks, N/E/S/W, Kaaba marker) rotates by -heading, so "N"
+  // always points to real north. The Kaaba marker sits on the dial at qiblaDeg.
+  // The fixed pointer at the top of the screen = where the phone is facing.
+  // When the Kaaba marker reaches the top pointer → you are facing the Qibla.
+  // how many degrees you still need to turn: + = right, - = left
+  const turnBy = angleDiff(qiblaDeg, norm360(-dialAngle));
+  const kaabaAngleRad = toRad(qiblaDeg);
+  const kaabaR = 100;
   const kaabaX = 128 + kaabaR * Math.sin(kaabaAngleRad);
   const kaabaY = 128 - kaabaR * Math.cos(kaabaAngleRad);
 
@@ -172,103 +296,107 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
         <div className="relative w-64 h-64">
           <svg viewBox="0 0 256 256" className="w-full h-full">
 
-            {/* Outer green ring */}
-            <circle cx="128" cy="128" r="122" fill="none" stroke="#4f9d2f" strokeWidth="8" />
-
-            {/* Inner white fill */}
+            {/* Outer ring (fixed) */}
+            <circle cx="128" cy="128" r="122" fill="none"
+              stroke={aligned ? "#2e7d32" : "#4f9d2f"} strokeWidth="8" />
             <circle cx="128" cy="128" r="118" fill="white" />
 
-            {/* Subtle star/wind-rose in background */}
-            {[0, 45, 90, 135].map((a) => {
-              const rad = (a * Math.PI) / 180;
-              return (
-                <line key={a}
-                  x1={128 + 90 * Math.sin(rad)} y1={128 - 90 * Math.cos(rad)}
-                  x2={128 - 90 * Math.sin(rad)} y2={128 + 90 * Math.cos(rad)}
-                  stroke="#e8f3df" strokeWidth="1"
-                />
-              );
-            })}
-
-            {/* Tick marks */}
-            {ticks.map(({ angle, isMajor, r1, r2 }, i) => (
-              <line key={i}
-                x1={128 + r2 * Math.sin(angle)} y1={128 - r2 * Math.cos(angle)}
-                x2={128 + r1 * Math.sin(angle)} y2={128 - r1 * Math.cos(angle)}
-                stroke={isMajor ? "#4f9d2f" : "#dce5d8"}
-                strokeWidth={isMajor ? 2 : 1}
-              />
-            ))}
-
-            {/* Cardinal letters */}
-            {[
-              { label: "N", dx: 0,    dy: -94 },
-              { label: "S", dx: 0,    dy:  98 },
-              { label: "W", dx: -96,  dy:   4 },
-              { label: "E", dx:  96,  dy:   4 },
-            ].map(({ label, dx, dy }) => (
-              <text key={label}
-                x={128 + dx} y={128 + dy}
-                textAnchor="middle" dominantBaseline="middle"
-                fontSize="11" fontWeight="700" fill="#18321f"
-              >
-                {label}
-              </text>
-            ))}
-
-            {/* ── Needle (rotates with device) ── */}
+            {/* ── Rotating dial ── */}
             <g
               style={{
                 transformOrigin: "128px 128px",
-                transform: `rotate(${displayAngle}deg)`,
-                transition: "transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
+                transform: `rotate(${dialAngle}deg)`,
+                transition: "transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
-              {/* Red north tip */}
-              <polygon
-                points="128,42 122,128 134,128"
-                fill={status === "active" ? "#e53935" : "#cccccc"}
-              />
-              {/* Light south tip */}
-              <polygon
-                points="128,214 122,128 134,128"
-                fill={status === "active" ? "#ef9a9a" : "#e0e0e0"}
-              />
-              {/* Center cap */}
-              <circle cx="128" cy="128" r="6"
-                fill="white" stroke={status === "active" ? "#e53935" : "#cccccc"} strokeWidth="2"
-              />
+              {/* Subtle wind-rose */}
+              {[0, 45, 90, 135].map((a) => {
+                const rad = toRad(a);
+                return (
+                  <line key={a}
+                    x1={128 + 90 * Math.sin(rad)} y1={128 - 90 * Math.cos(rad)}
+                    x2={128 - 90 * Math.sin(rad)} y2={128 + 90 * Math.cos(rad)}
+                    stroke="#e8f3df" strokeWidth="1"
+                  />
+                );
+              })}
+
+              {/* Tick marks */}
+              {ticks.map(({ angle, isMajor, r1, r2 }, i) => (
+                <line key={i}
+                  x1={128 + r2 * Math.sin(angle)} y1={128 - r2 * Math.cos(angle)}
+                  x2={128 + r1 * Math.sin(angle)} y2={128 - r1 * Math.cos(angle)}
+                  stroke={isMajor ? "#4f9d2f" : "#dce5d8"}
+                  strokeWidth={isMajor ? 2 : 1}
+                />
+              ))}
+
+              {/* Cardinal letters (counter-rotated so they stay readable) */}
+              {[
+                { label: "N", dx: 0,   dy: -88, color: "#e53935" },
+                { label: "S", dx: 0,   dy:  88, color: "#18321f" },
+                { label: "W", dx: -88, dy:   0, color: "#18321f" },
+                { label: "E", dx: 88,  dy:   0, color: "#18321f" },
+              ].map(({ label, dx, dy, color }) => (
+                <text key={label}
+                  x={128 + dx} y={128 + dy}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fontSize="12" fontWeight="700" fill={color}
+                  transform={`rotate(${-dialAngle} ${128 + dx} ${128 + dy})`}
+                >
+                  {label}
+                </text>
+              ))}
+
+              {status === "active" && (
+                <>
+                  {/* Big arrow pointing to the Kaaba (rotates with the dial) */}
+                  <g
+                    style={{
+                      transformOrigin: "128px 128px",
+                      transform: `rotate(${qiblaDeg}deg)`,
+                    }}
+                  >
+                    <polygon
+                      points="128,52 144,92 134,92 134,128 122,128 122,92 112,92"
+                      fill={aligned ? "#2e7d32" : "#e53935"}
+                      opacity="0.9"
+                    >
+                      {!aligned && (
+                        <animate attributeName="opacity" values="0.95;0.55;0.95"
+                          dur="1.6s" repeatCount="indefinite" />
+                      )}
+                    </polygon>
+                  </g>
+                  {/* Kaaba icon (upright regardless of dial rotation) */}
+                  <g transform={`translate(${kaabaX}, ${kaabaY}) rotate(${-dialAngle}) translate(-12, -12)`}
+                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }}
+                  >
+                    <rect x="0" y="4" width="24" height="18" rx="1" fill="#1a1a2e" />
+                    <rect x="0" y="4" width="24" height="5" fill="#2d2d4e" />
+                    <rect x="0" y="8" width="24" height="2" fill="#c8a951" />
+                    <rect x="8" y="14" width="8" height="8" rx="1" fill="#c8a951" />
+                    <rect x="9" y="15" width="6" height="7" rx="0.5" fill="#8b6914" />
+                    <rect x="0" y="0" width="24" height="5" rx="1" fill="#111" opacity="0.7" />
+                  </g>
+                </>
+              )}
             </g>
 
-            {/* ── Dashed line: center → Kaaba (fixed, not rotating) ── */}
-            {status === "active" && (
-              <line
-                x1="128" y1="128"
-                x2={kaabaX} y2={kaabaY}
-                stroke="#e53935" strokeWidth="1.5"
-                strokeDasharray="4 3" opacity="0.5"
-              />
+            {aligned && (
+              <circle cx="128" cy="128" r="118" fill="none" stroke="#2e7d32" strokeWidth="3">
+                <animate attributeName="r" values="118;126;118" dur="1.2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.9;0.2;0.9" dur="1.2s" repeatCount="indefinite" />
+              </circle>
             )}
 
-            {/* ── Kaaba icon on ring edge ── */}
-            {status === "active" && (
-              <g transform={`translate(${kaabaX - 12}, ${kaabaY - 12})`}
-                style={{
-                  filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))",
-                  transition: "all 0.2s cubic-bezier(0.25,0.46,0.45,0.94)",
-                }}
-              >
-                {/* Kaaba body */}
-                <rect x="0" y="4" width="24" height="18" rx="1" fill="#1a1a2e" />
-                <rect x="0" y="4" width="24" height="5" fill="#2d2d4e" />
-                <rect x="0" y="8" width="24" height="2" fill="#c8a951" />
-                {/* Door */}
-                <rect x="8" y="14" width="8" height="8" rx="1" fill="#c8a951" />
-                <rect x="9" y="15" width="6" height="7" rx="0.5" fill="#8b6914" />
-                {/* Black drape top */}
-                <rect x="0" y="0" width="24" height="5" rx="1" fill="#111" opacity="0.7"/>
-              </g>
-            )}
+            {/* ── Fixed pointer = where the phone is facing ── */}
+            <polygon
+              points="128,8 119,28 137,28"
+              fill={aligned ? "#2e7d32" : status === "active" ? "#e53935" : "#cccccc"}
+            />
+            <circle cx="128" cy="128" r="5" fill="white"
+              stroke={aligned ? "#2e7d32" : "#4f9d2f"} strokeWidth="2" />
           </svg>
 
           {/* Loading overlay */}
@@ -283,19 +411,37 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
         <div className="text-center min-h-[2.5rem]">
           {status === "active" && (
             <>
-              <p className="font-display text-3xl font-bold text-ink">{qiblaDeg}°</p>
+              <p className="font-display text-3xl font-bold text-ink">{Math.round(qiblaDeg)}°</p>
               {hasOrientation === false && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center justify-center gap-1">
                   <span>⚠️</span>
                   {isArabic
-                    ? "جهازك لا يدعم البوصلة — الاتجاه ثابت من الشمال"
-                    : "No compass sensor — direction is fixed from North"}
+                    ? "مفيش حساس بوصلة متاح (جرّب من موبايل وعلى HTTPS) — الاتجاه ثابت من الشمال"
+                    : "No compass sensor available (use a phone over HTTPS) — direction is fixed from North"}
                 </p>
               )}
-              {hasOrientation === true && (
-                <p className="text-xs text-primary mt-1 flex items-center justify-center gap-1">
+              {hasOrientation === true && aligned && (
+                <p className="text-sm font-semibold text-green-700 mt-1">
+                  {isArabic ? "✓ أنت في اتجاه القبلة" : "✓ You are facing the Qibla"}
+                </p>
+              )}
+              {hasOrientation === true && !aligned && (
+                <p className="text-sm font-semibold text-primary mt-1 flex items-center justify-center gap-2">
                   <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  {isArabic ? "البوصلة تعمل — حرّك جهازك" : "Live compass — rotate your device"}
+                  {turnBy > 0
+                    ? isArabic
+                      ? `لفّي يمين ${Math.round(Math.abs(turnBy))}° ➜`
+                      : `Turn right ${Math.round(Math.abs(turnBy))}° ➜`
+                    : isArabic
+                    ? `⬅ لفّي شمال ${Math.round(Math.abs(turnBy))}°`
+                    : `⬅ Turn left ${Math.round(Math.abs(turnBy))}°`}
+                </p>
+              )}
+              {needsCalibration && (
+                <p className="text-xs text-amber-600 mt-1">
+                  {isArabic
+                    ? "البوصلة محتاجة معايرة: حرّك الموبايل على شكل رقم 8"
+                    : "Calibrate: move your phone in a figure-8 motion"}
                 </p>
               )}
             </>
