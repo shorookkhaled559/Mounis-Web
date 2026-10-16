@@ -1,60 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
+
+// The <html class="dark"> is the single source of truth (set before paint by the
+// inline script in layout.tsx). We simply subscribe to it - no useEffect+setState.
+function subscribe(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+  return () => observer.disconnect();
+}
+const getSnapshot = () => document.documentElement.classList.contains("dark");
+const getServerSnapshot = () => false;
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [mounted, setMounted] = useState(false);
+  const t = useTranslations("nav");
+  const isDark = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  useEffect(() => {
-    setMounted(true);
-    // Check if user has a saved preference
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle("dark", savedTheme === "dark");
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const systemTheme = prefersDark ? "dark" : "light";
-      setTheme(systemTheme);
-      document.documentElement.classList.toggle("dark", prefersDark);
+  function toggle() {
+    const next = !isDark;
+    document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem("theme", next ? "dark" : "light");
+    } catch {
+      /* private mode / storage disabled: the theme still changes for this visit */
     }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
-  };
-
-  // Don't render anything until mounted (prevents hydration mismatch)
-  if (!mounted) {
-    return (
-      <button
-        type="button"
-        className="icon-btn"
-        disabled
-        aria-label="Toggle theme"
-      >
-        <Sun className="h-5 w-5" />
-      </button>
-    );
   }
 
   return (
     <button
       type="button"
-      onClick={toggleTheme}
+      onClick={toggle}
       className="icon-btn"
-      aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+      aria-label={isDark ? t("themeToLight") : t("themeToDark")}
+      aria-pressed={isDark}
     >
-      {theme === "light" ? (
-        <Moon aria-hidden="true" className="h-5 w-5" />
-      ) : (
+      {isDark ? (
         <Sun aria-hidden="true" className="h-5 w-5" />
+      ) : (
+        <Moon aria-hidden="true" className="h-5 w-5" />
       )}
     </button>
   );

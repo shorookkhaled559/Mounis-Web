@@ -4,13 +4,11 @@ import { BookOpen, User } from "lucide-react";
 interface HadithCardProps {
   hadith: Hadith;
   locale: string;
-  collectionId: string;
 }
 
-export function HadithCard({ hadith, locale, collectionId }: HadithCardProps) {
+export function HadithCard({ hadith, locale }: HadithCardProps) {
   const isArabic = locale === "ar";
   const text = isArabic ? hadith.matn_ar : hadith.matn_en;
-  const fullText = isArabic ? hadith.text_ar : hadith.text_en;
 
   return (
     <article className="rounded-lg border border-border bg-surface p-6 hover:border-primary/50 transition-colors">
@@ -38,15 +36,10 @@ export function HadithCard({ hadith, locale, collectionId }: HadithCardProps) {
       )}
 
       {/* Main Text */}
-      <div
-        className={`text-ink leading-relaxed ${
-          isArabic ? "text-right font-arabic text-lg" : "text-left"
-        }`}
-      >
+      <div className={`text-ink leading-relaxed ${isArabic ? "text-lg leading-loose" : ""}`}>
         {/* Show matn (main content) by default */}
         <p className="mb-3">{text}</p>
         
-        {/* Full text toggle could be added here */}
       </div>
 
       {/* Footer - Link to full hadith */}

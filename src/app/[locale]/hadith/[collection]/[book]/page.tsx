@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { getCollection } from "@/lib/hadith";
 import { HadithCard } from "@/components/sections/hadith-card";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { buildAlternates } from "@/lib/page-metadata";
 
 export async function generateMetadata({
   params,
@@ -31,6 +32,7 @@ export async function generateMetadata({
     description: locale === "ar" 
       ? `${book.hadiths.length} حديث`
       : `${book.hadiths.length} hadiths`,
+    alternates: buildAlternates(locale, `/hadith/${collectionId}/${bookNumber}`),
   };
 }
 
@@ -61,15 +63,15 @@ export default async function BookPage({
   return (
     <Container className="py-8">
       {/* Breadcrumb */}
-      <nav className="mb-6 flex items-center gap-2 text-sm text-ink-muted">
+      <nav aria-label="breadcrumb" className="mb-6 flex items-center gap-2 text-sm text-ink-muted">
         <Link href="/hadith" className="hover:text-primary">
           {isArabic ? "الأحاديث" : "Hadiths"}
         </Link>
-        <span>/</span>
+        <span aria-hidden="true">/</span>
         <Link href={`/hadith/${collectionId}`} className="hover:text-primary">
           {collectionName}
         </Link>
-        <span>/</span>
+        <span aria-hidden="true">/</span>
         <span className="text-ink">{bookName}</span>
       </nav>
 

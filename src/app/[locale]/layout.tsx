@@ -12,6 +12,10 @@ import { NavigationProgressLoader } from "@/components/navigation-progress-loade
 // Lazy-load NavigationProgress — nprogress is only relevant after the first
 // page load when the user navigates. No need to block the initial render.
 
+// Runs synchronously in <head> BEFORE first paint, so the saved/system theme is
+// applied immediately (no light->dark flash). Keep it tiny and dependency-free.
+const themeInitScript = `(function(){try{var s=localStorage.getItem("theme");var d=s?s==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d)}catch(e){}})()`;
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
@@ -40,20 +44,12 @@ export async function generateMetadata({
       ],
     },
     manifest: "/favicons/site.webmanifest",
-    alternates: {
-      languages: {
-        ar: "/ar",
-        en: "/en",
-      },
-      canonical: `${siteUrl}/${locale}`,
-    },
     openGraph: {
       title: t("title"),
       description: t("description"),
       siteName: t("siteName"),
       locale,
       type: "website",
-      url: `${siteUrl}/${locale}`,
       images: [
         {
           url: "/brand/logo.png",
@@ -89,6 +85,8 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <meta name="color-scheme" content="light dark" />
         {/* Preload the two most critical fonts so the browser fetches them in
             parallel with the HTML, before the CSS is parsed. This cuts the
             font render-blocking chain that was adding ~1350ms on mobile.
