@@ -21,11 +21,6 @@ export default async function Page({
   const { locale } = await params;
   setRequestLocale(locale);
   
-  // Add artificial delay in development to see loading states
-  if (process.env.NODE_ENV === "development") {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-  }
-  
   const t = await getTranslations({ locale, namespace: "pages.terms" });
 
   return (

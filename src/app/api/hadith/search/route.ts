@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import type { HadithCollection, Hadith } from "@/types/hadith";
+import type { Hadith } from "@/types/hadith";
+import { getCollectionIds, readCollectionUncached } from "@/lib/hadith";
 
-const HADITHS_DIR = path.join(process.cwd(), "public/data/hadiths");
+const DEFAULT_LIMIT = 30;
+const MAX_LIMIT = 100;
+const MIN_QUERY_LENGTH = 2;
+const MAX_QUERY_LENGTH = 100;
+
+/** Always returns a number in [1, MAX_LIMIT]; junk like "abc" or "-5" falls back to the default. */
+function parseLimit(raw: string | null): number {
+  const n = Number.parseInt(raw ?? "", 10);
+  if (!Number.isFinite(n) || n < 1) return DEFAULT_LIMIT;
+  return Math.min(n, MAX_LIMIT);
+}
 
 export interface HadithSearchResult {
   hadith: Hadith;
@@ -51,11 +60,14 @@ function searchInHadith(hadith: Hadith, normalizedQuery: string): boolean {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q") ?? "";
-  const limitParam = searchParams.get("limit");
-  const limit = limitParam ? Math.min(parseInt(limitParam, 10), 100) : 30;
+  const query = (searchParams.get("q") ?? "").trim();
+  const limit = parseLimit(searchParams.get("limit"));
 
-  if (!query.trim() || query.trim().length < 2) {
+  if (query.length > MAX_QUERY_LENGTH) {
+    return NextResponse.json({ error: "Query too long" }, { status: 400 });
+  }
+
+  if (query.length < MIN_QUERY_LENGTH) {
     return NextResponse.json<HadithSearchResponse>({
       results: [],
       total: 0,
@@ -67,41 +79,33 @@ export async function GET(request: NextRequest) {
   const results: HadithSearchResult[] = [];
 
   try {
-    const files = fs.readdirSync(HADITHS_DIR).filter((f) => f.endsWith(".json"));
-
-    for (const file of files) {
+    for (const id of await getCollectionIds()) {
       if (results.length >= limit) break;
 
-      try {
-        const filePath = path.join(HADITHS_DIR, file);
-        const content = fs.readFileSync(filePath, "utf-8");
-        const data: HadithCollection = JSON.parse(content);
+      const data = await readCollectionUncached(id);
+      if (!data?.books || !data.collection) continue;
 
-        if (!data.books || !data.collection) continue;
+      for (const book of data.books) {
+        if (results.length >= limit) break;
 
-        for (const book of data.books) {
+        for (const hadith of book.hadiths ?? []) {
           if (results.length >= limit) break;
 
-          for (const hadith of book.hadiths ?? []) {
-            if (results.length >= limit) break;
-
-            if (searchInHadith(hadith, normalizedQuery)) {
-              results.push({
-                hadith,
-                collectionId: data.collection.id,
-                collectionName_ar: data.collection.name_ar,
-                collectionName_en: data.collection.name_en,
-                bookName_ar: book.name_ar,
-                bookName_en: book.name_en,
-              });
-            }
+          if (searchInHadith(hadith, normalizedQuery)) {
+            results.push({
+              hadith,
+              collectionId: data.collection.id,
+              collectionName_ar: data.collection.name_ar,
+              collectionName_en: data.collection.name_en,
+              bookName_ar: book.name_ar,
+              bookName_en: book.name_en,
+            });
           }
         }
-      } catch {
-        continue;
       }
     }
   } catch (error) {
+    console.error("Hadith search failed:", error);
     return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 

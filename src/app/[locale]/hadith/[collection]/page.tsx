@@ -2,10 +2,20 @@ import { setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
-import { getCollection } from "@/lib/hadith";
+import { getCollection, getCollectionIds } from "@/lib/hadith";
 import { BookOpen, User } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { buildAlternates } from "@/lib/page-metadata";
+import { routing } from "@/i18n/routing";
+
+// Collection listings are cheap and few (one per collection and locale), so
+// they are built ahead of time instead of parsing a multi-MB file per request.
+export async function generateStaticParams() {
+  const ids = await getCollectionIds();
+  return routing.locales.flatMap((locale) =>
+    ids.map((collection) => ({ locale, collection })),
+  );
+}
 
 export async function generateMetadata({
   params,

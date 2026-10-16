@@ -84,11 +84,8 @@ export const articles: Article[] = [
   },
 ];
 
+// Kept async so callers don't change when this is swapped for a CMS/API fetch.
 export async function getArticleBySlug(slug: string) {
-  // Add artificial delay in development to see loading states
-  if (process.env.NODE_ENV === "development") {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-  }
   return articles.find((a) => a.slug === slug);
 }
 
