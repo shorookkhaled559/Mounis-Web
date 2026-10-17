@@ -6,7 +6,7 @@ import { Container } from "@/components/ui/container";
 import { AdSlot } from "@/components/ui/ad-slot";
 import { articles, getArticleBySlug } from "@/lib/data/articles";
 import { routing } from "@/i18n/routing";
-import { buildAlternates } from "@/lib/page-metadata";
+import { buildAlternates, getSiteUrl, ogImageFor } from "@/lib/page-metadata";
 
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
@@ -33,21 +33,16 @@ export async function generateMetadata({
       title: article.title[lang],
       description: article.excerpt[lang],
       type: "article",
+      siteName: "Mounis",
+      locale,
       publishedTime: article.publishedAt,
-      images: [
-        {
-          url: article.cover,
-          width: 1200,
-          height: 630,
-          alt: article.title[lang],
-        },
-      ],
+      images: [{ ...ogImageFor(article.cover), alt: article.title[lang] }],
     },
     twitter: {
       card: "summary_large_image",
       title: article.title[lang],
       description: article.excerpt[lang],
-      images: [article.cover],
+      images: [ogImageFor(article.cover).url],
     },
   };
 }
@@ -63,7 +58,7 @@ export default async function ArticlePage({
   if (!article) notFound();
 
   const lang = locale as "ar" | "en";
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com";
+  const siteUrl = getSiteUrl();
   const articleUrl = `${siteUrl}/${locale}/articles/${slug}`;
 
   // JSON-LD Structured Data for SEO
@@ -72,7 +67,7 @@ export default async function ArticlePage({
     "@type": "Article",
     "headline": article.title[lang],
     "description": article.excerpt[lang],
-    "image": article.cover,
+    "image": `${siteUrl}${ogImageFor(article.cover).url}`,
     "datePublished": article.publishedAt,
     "author": {
       "@type": "Organization",
@@ -95,7 +90,8 @@ export default async function ArticlePage({
       {/* Structured Data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // escape "<" so article text can never close the script tag
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       
       <FeaturedArticle article={article} />

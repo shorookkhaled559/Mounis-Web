@@ -16,7 +16,6 @@ export async function Newsletter() {
           alt=""
           fill
           className="object-cover object-right md:object-center"
-          quality={100}
         />
       </div>
 

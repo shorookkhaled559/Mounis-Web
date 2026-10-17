@@ -26,7 +26,6 @@ export function HadithStyleHero({
           fill
           priority
           className="object-cover object-left md:object-center"
-          quality={100}
         />
       </div>
 

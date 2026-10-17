@@ -7,6 +7,11 @@ export type Article = {
   excerpt: { ar: string; en: string };
   cover: string;
   body?: { ar: string[]; en: string[] };
+  /** Optional pull-quote (verse / hadith) shown under the body. */
+  quote?: {
+    text: { ar: string; en: string };
+    source: { ar: string; en: string };
+  };
 };
 
 // Placeholder/demo content only. Structure is designed to be swapped for a
@@ -26,6 +31,13 @@ export const articles: Article[] = [
       en: "A quiet read on how remembrance settles the heart, and how reflection becomes a daily companion rather than a quick habit.",
     },
     cover: "/articles/sakinah.svg",
+    quote: {
+      text: {
+        ar: "الَّذِينَ آمَنُوا وَتَطْمَئِنُّ قُلُوبُهُم بِذِكْرِ اللَّهِ ۗ أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+        en: "A verse from Surah Ar-Ra'd reminding that hearts find rest in the remembrance of God.",
+      },
+      source: { ar: "سورة الرعد: ٢٨", en: "Qur'an 13:28" },
+    },
     body: {
       ar: [
         "يفتح كثير من الناس يومهم على شاشات مزدحمة، ثم يبحثون عن سكينة في اللحظة الأخيرة قبل النوم.",

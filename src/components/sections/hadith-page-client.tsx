@@ -51,7 +51,6 @@ export function HadithPageClient({ collections, locale }: HadithPageClientProps)
             fill
             priority
             className="object-cover object-left md:object-center"
-            quality={100}
           />
         </div>
         
