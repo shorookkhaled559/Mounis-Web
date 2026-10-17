@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import {
   CITIES, METHODS, DEFAULT_LOCATION, DEFAULT_METHOD_ID,
-  getPrayerTimes, dayPartsInTz, addDays, formatPrayerTime,
+  getPrayerTimes, dayPartsInTz, addDays, formatPrayerTime, parseSavedPrefs,
   toHijri, formatHijri, formatGregorian,
   type PrayerKey, type PrayerLocation,
 } from "@/lib/prayer";
@@ -50,11 +50,8 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
   useEffect(() => {
     const t = setTimeout(() => {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const saved = JSON.parse(raw) as Prefs;
-          if (saved?.loc?.lat != null && saved?.methodId) setPrefs(saved);
-        }
+        const saved = parseSavedPrefs(localStorage.getItem(STORAGE_KEY));
+        if (saved) setPrefs(saved);
       } catch {
         /* ignore */
       }
@@ -87,19 +84,20 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
 
   // Today's day in the *selected location's* timezone (not the device's)
   const todayKey = now ? dayPartsInTz(now, loc.tz) : null;
-  const dayStr = todayKey ? `${todayKey.y}-${todayKey.m}-${todayKey.d}` : "";
+  // primitives, so the memos below only recompute when the calendar day changes
+  const ty = todayKey?.y;
+  const tm = todayKey?.m;
+  const td = todayKey?.d;
 
   const times = useMemo(() => {
-    if (!todayKey) return null;
-    return getPrayerTimes(loc, methodId, todayKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loc, methodId, dayStr]);
+    if (ty == null || tm == null || td == null) return null;
+    return getPrayerTimes(loc, methodId, { y: ty, m: tm, d: td });
+  }, [loc, methodId, ty, tm, td]);
 
   const tomorrowFajr = useMemo(() => {
-    if (!todayKey) return null;
-    return getPrayerTimes(loc, methodId, addDays(todayKey, 1)).fajr;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loc, methodId, dayStr]);
+    if (ty == null || tm == null || td == null) return null;
+    return getPrayerTimes(loc, methodId, addDays({ y: ty, m: tm, d: td }, 1)).fajr;
+  }, [loc, methodId, ty, tm, td]);
 
   // ── Next prayer + countdown ────────────────────────────────────────────────
   let nextKey: PrayerKey | null = null;
