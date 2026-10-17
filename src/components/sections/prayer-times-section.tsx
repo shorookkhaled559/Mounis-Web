@@ -171,7 +171,7 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
         setGeoState("error");
         setGeoError(
           err.code === 1
-            ? isArabic ? "تم رفض إذن الموقع. اختاري مدينة من القائمة." : "Location permission denied. Pick a city below."
+            ? isArabic ? "تم رفض إذن الموقع. اختر مدينة من القائمة." : "Location permission denied. Pick a city below."
             : isArabic ? "تعذّر تحديد موقعك." : "Could not get your location."
         );
       },
@@ -228,7 +228,7 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-5 h-full">
+    <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-5 h-full">
 
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -370,7 +370,7 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
               {panel === "method" && (isArabic ? "طريقة الحساب" : "Calculation Method")}
               {panel === "calendar" && (isArabic ? "التقويم" : "Calendar")}
             </h3>
-            <button type="button" onClick={() => setPanel(null)} aria-label="close" className="text-ink-muted hover:text-ink">
+            <button type="button" onClick={() => setPanel(null)} aria-label={isArabic ? "إغلاق" : "Close"} className="text-ink-muted hover:text-ink">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -382,7 +382,7 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
                 type="button"
                 onClick={useMyLocation}
                 disabled={geoState === "loading"}
-                className="w-full flex items-center justify-center gap-2 bg-primary text-white text-sm font-medium rounded-lg py-2.5 hover:opacity-90 disabled:opacity-60"
+                className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg py-2.5 hover:opacity-90 disabled:opacity-60"
               >
                 {geoState === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
                 {isArabic ? "استخدام موقعي الحالي" : "Use my current location"}
@@ -397,10 +397,10 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
                     setPanel(null);
                   }
                 }}
-                className="w-full border border-border rounded-lg bg-white text-sm px-3 py-2 text-ink"
+                className="w-full border border-border rounded-lg bg-surface text-sm px-3 py-2 text-ink"
               >
                 <option value="" disabled>
-                  {isArabic ? "أو اختاري مدينة…" : "Or pick a city…"}
+                  {isArabic ? "أو اختر مدينة…" : "Or pick a city…"}
                 </option>
                 {CITIES.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -425,7 +425,7 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
                   className={`w-full text-start text-sm rounded-lg px-3 py-2 border transition-colors ${
                     m.id === methodId
                       ? "border-primary bg-primary/10 text-primary font-semibold"
-                      : "border-border bg-white text-ink hover:bg-surface-raised"
+                      : "border-border bg-surface text-ink hover:bg-surface-raised"
                   }`}
                 >
                   {isArabic ? m.nameAr : m.nameEn}
@@ -443,16 +443,16 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
           {panel === "calendar" && calendar && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <button type="button" onClick={() => shiftMonth(isArabic ? 1 : -1)} aria-label="prev"
-                  className="p-1.5 rounded-lg hover:bg-white text-ink">
+                <button type="button" onClick={() => shiftMonth(isArabic ? 1 : -1)} aria-label={isArabic ? "الشهر السابق" : "Previous month"}
+                  className="p-1.5 rounded-lg hover:bg-surface-raised text-ink">
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <div className="text-center">
                   <div className="text-sm font-bold text-ink">{calendar.monthTitle}</div>
                   <div className="text-[11px] text-primary">{calendar.hijriTitle}</div>
                 </div>
-                <button type="button" onClick={() => shiftMonth(isArabic ? -1 : 1)} aria-label="next"
-                  className="p-1.5 rounded-lg hover:bg-white text-ink">
+                <button type="button" onClick={() => shiftMonth(isArabic ? -1 : 1)} aria-label={isArabic ? "الشهر التالي" : "Next month"}
+                  className="p-1.5 rounded-lg hover:bg-surface-raised text-ink">
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -469,11 +469,11 @@ export function PrayerTimesSection({ locale }: PrayerTimesSectionProps) {
                     <div
                       key={d}
                       className={`rounded-lg py-1.5 flex flex-col items-center leading-tight ${
-                        isToday ? "bg-primary text-white" : "bg-white text-ink"
+                        isToday ? "bg-primary text-primary-foreground" : "bg-surface text-ink"
                       }`}
                     >
                       <span className="text-sm font-semibold tabular-nums">{d}</span>
-                      <span className={`text-[10px] tabular-nums ${isToday ? "text-white/90" : "text-ink-muted"}`}>
+                      <span className={`text-[10px] tabular-nums ${isToday ? "text-primary-foreground/90" : "text-ink-muted"}`}>
                         {h.day === 1 ? h.monthName : h.day}
                       </span>
                     </div>

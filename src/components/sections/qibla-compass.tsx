@@ -268,7 +268,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
   });
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-5 h-full">
+    <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-5 h-full">
 
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -401,7 +401,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
 
           {/* Loading overlay */}
           {status === "loading" && (
-            <div className="absolute inset-0 rounded-full bg-white/70 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-surface/70 flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           )}
@@ -416,7 +416,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
                 <p className="text-xs text-amber-600 mt-1 flex items-center justify-center gap-1">
                   <span>⚠️</span>
                   {isArabic
-                    ? "مفيش حساس بوصلة متاح (جرّب من موبايل وعلى HTTPS) — الاتجاه ثابت من الشمال"
+                    ? "لا يتوفر حساس بوصلة (جرّب من هاتف محمول وعبر HTTPS) — الاتجاه ثابت من الشمال"
                     : "No compass sensor available (use a phone over HTTPS) — direction is fixed from North"}
                 </p>
               )}
@@ -430,17 +430,17 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
                   <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
                   {turnBy > 0
                     ? isArabic
-                      ? `لفّي يمين ${Math.round(Math.abs(turnBy))}° ➜`
+                      ? `لُفّ يميناً ${Math.round(Math.abs(turnBy))}° ➜`
                       : `Turn right ${Math.round(Math.abs(turnBy))}° ➜`
                     : isArabic
-                    ? `⬅ لفّي شمال ${Math.round(Math.abs(turnBy))}°`
+                    ? `⬅ لُفّ يساراً ${Math.round(Math.abs(turnBy))}°`
                     : `⬅ Turn left ${Math.round(Math.abs(turnBy))}°`}
                 </p>
               )}
               {needsCalibration && (
                 <p className="text-xs text-amber-600 mt-1">
                   {isArabic
-                    ? "البوصلة محتاجة معايرة: حرّك الموبايل على شكل رقم 8"
+                    ? "تحتاج البوصلة إلى معايرة: حرّك الهاتف على شكل الرقم 8"
                     : "Calibrate: move your phone in a figure-8 motion"}
                 </p>
               )}
@@ -466,10 +466,10 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
       </div>
 
       {/* CTA */}
-      <button
+      <button type="button"
         onClick={requestLocation}
         disabled={status === "loading"}
-        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-primary-deep active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary-deep active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status === "loading" ? (
           <Loader2 className="w-4 h-4 animate-spin" />
@@ -482,7 +482,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
       </button>
 
       <p className="text-center text-xs text-ink-muted">
-        <button className="text-primary hover:underline inline-flex items-center gap-1">
+        <button type="button" className="text-primary hover:underline inline-flex items-center gap-1">
           <MapPin className="w-3 h-3" />
           {isArabic ? "أو اختر موقعك يدوياً" : "Or choose location manually"}
         </button>

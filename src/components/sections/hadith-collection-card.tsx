@@ -32,7 +32,7 @@ export function HadithCollectionCard({
         href={`/hadith/${collection.id}`}
         className="group block"
       >
-        <div className="relative bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all border border-gray-100">
+        <div className="relative bg-surface rounded-lg p-4 shadow-sm hover:shadow-md transition-all border border-border">
           {/* Book Cover Image */}
           <div className="flex justify-center mb-3">
             <div className="relative w-24 h-32">

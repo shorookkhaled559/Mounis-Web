@@ -14,7 +14,7 @@ export function NewsletterForm({ placeholder, buttonLabel }: { placeholder: stri
         type="email"
         required
         placeholder={placeholder}
-        className="flex-1 rounded-full border border-ink/10 bg-white/60 px-5 py-2.5 text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all"
+        className="flex-1 rounded-full border border-ink/10 bg-background/60 px-5 py-2.5 text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all"
       />
       <button
         type="submit"

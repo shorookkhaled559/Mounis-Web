@@ -88,7 +88,7 @@ export function Loader({ text, size = "md", fullPage = false }: LoaderProps) {
         </svg>
       </div>
       {text && <p className="text-sm text-ink-muted">{text}</p>}
-      <span className="sr-only">Loading...</span>
+      <span className="sr-only">Loading…</span>
     </div>
   );
 
