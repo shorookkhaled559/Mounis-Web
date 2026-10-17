@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mounis Web (مؤنس)
 
-## Getting Started
+Bilingual (Arabic / English) Islamic content website: articles, hadith library,
+prayer times and Qibla compass. Next.js (App Router) + next-intl + Tailwind v4.
 
-First, run the development server:
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # set NEXT_PUBLIC_SITE_URL
+npm ci
+npm run dev                  # http://localhost:3000  (redirects to /ar)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Script | What it does |
+| --- | --- |
+| `npm run check` | lint + typecheck + tests (run before pushing) |
+| `npm test` | unit tests (Vitest) for the pure logic in `src/lib` |
+| `npm run build` | production build |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/app/[locale]/…     pages (all content routes live under the locale segment)
+src/app/api/…          route handlers (hadith search)
+src/components/        layout/ · sections/ · ui/
+src/lib/               pure logic: prayer times, qibla math, hadith data access, SEO helpers
+src/lib/data/          placeholder content (swap for CMS/API later)
+src/messages/{ar,en}.json   UI strings (next-intl)
+public/data/hadiths/   hadith corpus (JSON, ~156 MB) read on the server
+```
 
-## Learn More
+## Notes
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **i18n:** new UI text goes in `src/messages/*.json`, not inline `locale === "ar" ? … : …`.
+- **Hadith pages:** collection pages are prebuilt; book pages are rendered on the first
+  visit and cached. Parsed collections are kept in a small LRU (`MAX_CACHED` in `src/lib/hadith.ts`).
+- **Dark mode:** use theme tokens (`bg-surface`, `text-ink`, `text-primary-foreground`),
+  never `bg-white` / `text-white` on theme-dependent surfaces.
+- **Site URL:** `getSiteUrl()` in `src/lib/page-metadata.ts` is the only place that reads
+  `NEXT_PUBLIC_SITE_URL`.
