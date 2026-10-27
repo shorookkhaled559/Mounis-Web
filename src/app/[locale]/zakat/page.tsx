@@ -2,7 +2,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/page-metadata";
 import { PageHero } from "@/components/sections/page-hero";
-import { StubNotice } from "@/components/sections/stub-notice";
+import { ZakatCalculator } from "@/components/sections/zakat-calculator";
 
 export async function generateMetadata({
   params,
@@ -20,13 +20,13 @@ export default async function Page({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  
+
   const t = await getTranslations({ locale, namespace: "pages.zakat" });
 
   return (
     <>
       <PageHero title={t("title")} description={t("description")} />
-      <StubNotice />
+      <ZakatCalculator locale={locale} />
     </>
   );
 }
