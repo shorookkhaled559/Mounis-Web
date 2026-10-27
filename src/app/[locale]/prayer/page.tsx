@@ -1,7 +1,7 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/page-metadata";
-import { HadithStyleHero } from "@/components/sections/hadith-style-hero";
+import { PrayerStyleHero } from "@/components/sections/prayer-style-hero";
 import { PrayerSection } from "@/components/sections/prayer-section";
 
 export async function generateMetadata({
@@ -26,7 +26,7 @@ export default async function Page({
 
   return (
     <>
-      <HadithStyleHero
+      <PrayerStyleHero
         title={t("title")}
         description={t("description")}
         breadcrumb={isArabic ? "مواقيت الصلاة والقبلة" : "Prayer & Qibla"}
