@@ -1,7 +1,7 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/page-metadata";
-import { PageHero } from "@/components/sections/page-hero";
+import { ZakatStyleHero } from "@/components/sections/zakat-style-hero";
 import { ZakatCalculator } from "@/components/sections/zakat-calculator";
 
 export async function generateMetadata({
@@ -22,10 +22,16 @@ export default async function Page({
   setRequestLocale(locale);
 
   const t = await getTranslations({ locale, namespace: "pages.zakat" });
+  const isArabic = locale === "ar";
 
   return (
     <>
-      <PageHero title={t("title")} description={t("description")} />
+      <ZakatStyleHero
+        title={t("title")}
+        description={t("description")}
+        breadcrumb={isArabic ? "حاسبة الزكاة" : "Zakat Calculator"}
+        locale={locale}
+      />
       <ZakatCalculator locale={locale} />
     </>
   );
