@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 /* Make Tailwind's `dark:` variant follow the .dark class (not the OS setting) */
 @custom-variant dark (&:where(.dark, .dark *));
