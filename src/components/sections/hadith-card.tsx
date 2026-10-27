@@ -4,10 +4,9 @@ import { BookOpen, User } from "lucide-react";
 interface HadithCardProps {
   hadith: Hadith;
   locale: string;
-  collectionId: string;
 }
 
-export function HadithCard({ hadith, locale, collectionId }: HadithCardProps) {
+export function HadithCard({ hadith, locale }: HadithCardProps) {
   const isArabic = locale === "ar";
   const text = isArabic ? hadith.matn_ar : hadith.matn_en;
 

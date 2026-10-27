@@ -65,6 +65,42 @@ export const CITIES: PrayerLocation[] = [
 
 export const DEFAULT_LOCATION = CITIES[0];
 
+export function isValidTimeZone(tz: unknown): tz is string {
+  if (typeof tz !== "string" || !tz) return false;
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * localStorage is user-editable and survives app updates, so never trust it:
+ * a bad timezone makes Intl throw during render and takes the whole page down.
+ */
+export function parseSavedPrefs(
+  raw: string | null,
+): { loc: PrayerLocation; methodId: string } | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw);
+    const loc = v?.loc;
+    const ok =
+      loc &&
+      Number.isFinite(loc.lat) && Math.abs(loc.lat) <= 90 &&
+      Number.isFinite(loc.lng) && Math.abs(loc.lng) <= 180 &&
+      isValidTimeZone(loc.tz) &&
+      typeof loc.id === "string" &&
+      typeof loc.nameAr === "string" &&
+      typeof loc.nameEn === "string" &&
+      METHODS.some((m) => m.id === v.methodId);
+    return ok ? { loc, methodId: v.methodId } : null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Calculation methods ──────────────────────────────────────────────────────
 export interface MethodInfo {
   id: string;

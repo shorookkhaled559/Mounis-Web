@@ -16,13 +16,12 @@ export async function Newsletter() {
           alt=""
           fill
           className="object-cover object-right md:object-center"
-          quality={100}
         />
       </div>
 
       <Container className="relative z-10">
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div className="bg-surface/90 backdrop-blur-md rounded-2xl p-6 sm:p-8 shadow-sm">
             <div className="flex flex-col md:flex-row-reverse items-center gap-6 md:gap-8">
               {/* Right: Decorative leaves */}
               <div className="flex-shrink-0 w-24 h-24 md:w-28 md:h-28">

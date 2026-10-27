@@ -17,7 +17,6 @@ export async function Hero() {
           fill
           priority
           className="object-cover object-center"
-          quality={100}
         />
         {/* Overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/30" />

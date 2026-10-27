@@ -43,14 +43,14 @@ export function DailyArticle({ articles }: DailyArticleProps) {
 
           {/* Navigation Arrows */}
           <div className="flex items-center gap-2">
-            <button
+            <button type="button"
               onClick={handlePrevious}
               className="w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface-raised hover:border-primary transition-all flex items-center justify-center group"
               aria-label={locale === "ar" ? "السابق" : "Previous"}
             >
               <ChevronLeft aria-hidden="true" className="w-5 h-5 text-ink-muted group-hover:text-primary rtl:rotate-180" />
             </button>
-            <button
+            <button type="button"
               onClick={handleNext}
               className="w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface-raised hover:border-primary transition-all flex items-center justify-center group"
               aria-label={locale === "ar" ? "التالي" : "Next"}
@@ -128,7 +128,7 @@ export function DailyArticle({ articles }: DailyArticleProps) {
         {/* Pagination Dots */}
         <div className="flex items-center justify-center gap-2 mt-6">
           {articles.map((_, index) => (
-            <button
+            <button type="button"
               key={index}
               onClick={() => setCurrentIndex(index)}
               className={`h-2 rounded-full transition-all ${

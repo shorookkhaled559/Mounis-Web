@@ -51,7 +51,6 @@ export function HadithPageClient({ collections, locale }: HadithPageClientProps)
             fill
             priority
             className="object-cover object-left md:object-center"
-            quality={100}
           />
         </div>
         
@@ -59,7 +58,7 @@ export function HadithPageClient({ collections, locale }: HadithPageClientProps)
         <Container className="relative z-10 py-8 md:py-12">
           <div className="max-w-3xl mx-auto">
             {/* Breadcrumb */}
-            <nav aria-label="breadcrumb" className="my-4 flex items-center gap-2 text-sm text-ink-muted">
+            <nav aria-label="breadcrumb" className="my-4 flex items-center gap-2 text-sm text-gray-700">
               <span className="font-medium text-primary">{isArabic ? 'الأحاديث' : 'Hadiths'}</span>
               <span aria-hidden="true">•</span>
               <span>{isArabic ? 'الرئيسية' : 'Home'}</span>
@@ -71,7 +70,7 @@ export function HadithPageClient({ collections, locale }: HadithPageClientProps)
             </h1>
 
             {/* Description */}
-            <p className="text-lg text-ink-muted mb-8">
+            <p className="text-lg text-gray-700 mb-8">
               {isArabic 
                 ? 'مجموعة مختارة من الأحاديث النبوية الشريفة من أشهر المصادر'
                 : 'A curated collection of authentic prophetic hadiths from renowned sources'}

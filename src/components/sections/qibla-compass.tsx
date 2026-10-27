@@ -3,29 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MapPin, Loader2, AlertCircle } from "lucide-react";
 import geomagnetism from "geomagnetism";
-
-// Kaaba coordinates
-const KAABA_LAT = 21.4225;
-const KAABA_LNG = 39.8262;
-
-// ── Math helpers ─────────────────────────────────────────────────────────────
-const toRad = (d: number) => (d * Math.PI) / 180;
-const toDeg = (r: number) => (r * 180) / Math.PI;
-const norm360 = (d: number) => ((d % 360) + 360) % 360;
-// signed shortest difference a - b in the range [-180, 180)
-const angleDiff = (a: number, b: number) => norm360(a - b + 180) - 180;
-
-/** Initial great-circle bearing from (lat,lng) to the Kaaba, from TRUE north. */
-function calcQibla(lat: number, lng: number): number {
-  const φ1 = toRad(lat);
-  const φ2 = toRad(KAABA_LAT);
-  const Δλ = toRad(KAABA_LNG - lng);
-  const y = Math.sin(Δλ) * Math.cos(φ2);
-  const x =
-    Math.cos(φ1) * Math.sin(φ2) -
-    Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-  return norm360(toDeg(Math.atan2(y, x)));
-}
+import { angleDiff, calcQibla, headingFromEuler, norm360, toDeg, toRad } from "@/lib/qibla";
 
 /** Magnetic declination (degrees, east positive) at a location. */
 function getDeclination(lat: number, lng: number): number {
@@ -34,44 +12,6 @@ function getDeclination(lat: number, lng: number): number {
   } catch {
     return 0;
   }
-}
-
-/**
- * Compass heading (clockwise from north, 0-360) from alpha/beta/gamma.
- *
- * The classic W3C formula gives the direction the BACK of the phone points to,
- * and breaks (returns 0) when the phone is flat. A compass is usually held flat
- * or tilted, so we compute both:
- *   - "top edge" direction  → good when the phone is flat / slightly tilted
- *   - "back camera" direction → good when the phone is held upright
- * and use whichever has the bigger horizontal component (they agree in between).
- */
-function headingFromEuler(
-  alpha: number,
-  beta: number,
-  gamma: number,
-  screenAngle: number
-): number {
-  const a = toRad(alpha);
-  const b = toRad(beta);
-  const g = toRad(gamma);
-  const cA = Math.cos(a), sA = Math.sin(a);
-  const cB = Math.cos(b), sB = Math.sin(b);
-  const cG = Math.cos(g), sG = Math.sin(g);
-
-  // device +Y axis (top edge) projected on the ground: (East, North)
-  const topE = -cB * sA;
-  const topN = cA * cB;
-  // device -Z axis (back of the phone) projected on the ground
-  const backE = -(cA * sG + cG * sA * sB);
-  const backN = -(sA * sG - cA * cG * sB);
-
-  if (Math.hypot(topE, topN) >= Math.hypot(backE, backN)) {
-    // flat mode: the "forward" direction is the top of the SCREEN, which depends
-    // on whether the phone is in portrait or landscape
-    return norm360(toDeg(Math.atan2(topE, topN)) + screenAngle);
-  }
-  return norm360(toDeg(Math.atan2(backE, backN)));
 }
 
 type Status = "idle" | "loading" | "active" | "error";
@@ -268,7 +208,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
   });
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-5 h-full">
+    <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-5 h-full">
 
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -401,7 +341,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
 
           {/* Loading overlay */}
           {status === "loading" && (
-            <div className="absolute inset-0 rounded-full bg-white/70 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-surface/70 flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           )}
@@ -416,7 +356,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
                 <p className="text-xs text-amber-600 mt-1 flex items-center justify-center gap-1">
                   <span>⚠️</span>
                   {isArabic
-                    ? "مفيش حساس بوصلة متاح (جرّب من موبايل وعلى HTTPS) — الاتجاه ثابت من الشمال"
+                    ? "لا يتوفر حساس بوصلة (جرّب من هاتف محمول وعبر HTTPS) — الاتجاه ثابت من الشمال"
                     : "No compass sensor available (use a phone over HTTPS) — direction is fixed from North"}
                 </p>
               )}
@@ -430,17 +370,17 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
                   <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
                   {turnBy > 0
                     ? isArabic
-                      ? `لفّي يمين ${Math.round(Math.abs(turnBy))}° ➜`
+                      ? `لُفّ يميناً ${Math.round(Math.abs(turnBy))}° ➜`
                       : `Turn right ${Math.round(Math.abs(turnBy))}° ➜`
                     : isArabic
-                    ? `⬅ لفّي شمال ${Math.round(Math.abs(turnBy))}°`
+                    ? `⬅ لُفّ يساراً ${Math.round(Math.abs(turnBy))}°`
                     : `⬅ Turn left ${Math.round(Math.abs(turnBy))}°`}
                 </p>
               )}
               {needsCalibration && (
                 <p className="text-xs text-amber-600 mt-1">
                   {isArabic
-                    ? "البوصلة محتاجة معايرة: حرّك الموبايل على شكل رقم 8"
+                    ? "تحتاج البوصلة إلى معايرة: حرّك الهاتف على شكل الرقم 8"
                     : "Calibrate: move your phone in a figure-8 motion"}
                 </p>
               )}
@@ -466,10 +406,10 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
       </div>
 
       {/* CTA */}
-      <button
+      <button type="button"
         onClick={requestLocation}
         disabled={status === "loading"}
-        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-primary-deep active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary-deep active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {status === "loading" ? (
           <Loader2 className="w-4 h-4 animate-spin" />
@@ -482,7 +422,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
       </button>
 
       <p className="text-center text-xs text-ink-muted">
-        <button className="text-primary hover:underline inline-flex items-center gap-1">
+        <button type="button" className="text-primary hover:underline inline-flex items-center gap-1">
           <MapPin className="w-3 h-3" />
           {isArabic ? "أو اختر موقعك يدوياً" : "Or choose location manually"}
         </button>

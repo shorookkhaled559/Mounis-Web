@@ -126,5 +126,16 @@
   "common": {
     "comingSoon": "This section is being prepared, check back soon.",
     "backHome": "Back to home"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "The link you followed doesn't exist or has moved."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "description": "We couldn't load this page. Please try again.",
+      "retry": "Try again"
+    }
   }
 }

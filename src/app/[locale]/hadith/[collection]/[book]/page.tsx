@@ -7,6 +7,18 @@ import { HadithCard } from "@/components/sections/hadith-card";
 import { Link } from "@/i18n/navigation";
 import { buildAlternates } from "@/lib/page-metadata";
 
+// Roughly 600 books x 2 locales: building them all would bloat the build, so
+// pages are rendered on the first visit and then served from the cache.
+export function generateStaticParams() {
+  return [];
+}
+
+// Strict on purpose: parseInt("1abc") === 1 would serve the same book under
+// many different URLs (duplicate content).
+function parseBookNumber(value: string): number | null {
+  return /^\d+$/.test(value) ? Number(value) : null;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -19,7 +31,9 @@ export async function generateMetadata({
     return { title: "Not Found" };
   }
 
-  const book = collection.books.find((b) => b.book_number === parseInt(bookNumber));
+  const number = parseBookNumber(bookNumber);
+  const book =
+    number === null ? undefined : collection.books.find((b) => b.book_number === number);
   if (!book) {
     return { title: "Not Found" };
   }
@@ -50,8 +64,10 @@ export default async function BookPage({
     notFound();
   }
 
-  const book = collection.books.find((b) => b.book_number === parseInt(bookNumber));
-  
+  const number = parseBookNumber(bookNumber);
+  const book =
+    number === null ? undefined : collection.books.find((b) => b.book_number === number);
+
   if (!book) {
     notFound();
   }
@@ -91,7 +107,6 @@ export default async function BookPage({
             key={hadith.hadith_number}
             hadith={hadith}
             locale={locale}
-            collectionId={collectionId}
           />
         ))}
       </div>
