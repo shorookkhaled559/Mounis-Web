@@ -46,7 +46,7 @@ export function Categories() {
         {/* Section Header */}
         <div className="text-center mb-10">
           <h2 className="font-display text-2xl sm:text-3xl text-ink mb-3">
-            {locale === "ar" ? "تصنيفات رئيسية" : "Main Categories"}
+            {locale === "ar" ? "استكشف" : "Explore"}
           </h2>
           <p className="text-sm text-ink-muted max-w-2xl mx-auto">
             {locale === "ar"
@@ -79,28 +79,7 @@ export function Categories() {
           })}
         </div>
 
-        {/* View All Link */}
-        <div className="text-center mt-8">
-          <Link
-            href="/categories"
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-deep transition-colors"
-          >
-            {locale === "ar" ? "عرض كل التصنيفات" : "View All Categories"}
-            <svg
-              className="w-4 h-4 rtl:rotate-180"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </Link>
-        </div>
+
       </Container>
     </section>
   );
