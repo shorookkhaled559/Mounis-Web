@@ -3,6 +3,7 @@ import { routing } from "@/i18n/routing";
 import { articles } from "@/lib/data/articles";
 import { getCollectionIds } from "@/lib/hadith";
 import { getSiteUrl } from "@/lib/page-metadata";
+import { surahs } from "@/lib/quran";
 
 const staticPaths = [
   "",
@@ -17,6 +18,7 @@ const staticPaths = [
   "/terms",
   "/cookies",
   "/articles",
+  "/quran",
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -35,6 +37,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const id of collectionIds) {
       entries.push({
         url: `${siteUrl}/${locale}/hadith/${id}`,
+        changeFrequency: "yearly",
+        priority: 0.5,
+      });
+    }
+    for (const surah of surahs) {
+      entries.push({
+        url: `${siteUrl}/${locale}/quran/${surah.n}`,
         changeFrequency: "yearly",
         priority: 0.5,
       });
