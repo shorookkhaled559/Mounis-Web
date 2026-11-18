@@ -13,6 +13,7 @@ const PAGE_PATHS = {
   terms: "/terms",
   cookies: "/cookies",
   articles: "/articles",
+  quran: "/quran",
 } as const;
 
 export type PageKey = keyof typeof PAGE_PATHS;
@@ -55,7 +56,7 @@ export async function buildPageMetadata(locale: string, pageKey: PageKey): Promi
   const siteName = (await getTranslations({ locale, namespace: "meta" }))("siteName");
   const path = PAGE_PATHS[pageKey];
   const title = t("title");
-  const hasDescription = ["prayer", "zakat", "hadith", "thisDay", "fatwas", "about", "contact"].includes(pageKey);
+  const hasDescription = ["prayer", "zakat", "hadith", "thisDay", "fatwas", "about", "contact", "quran"].includes(pageKey);
   const description = hasDescription ? t("description") : undefined;
 
   return {
