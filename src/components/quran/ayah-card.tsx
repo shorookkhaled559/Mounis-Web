@@ -2,18 +2,19 @@
 
 import { memo } from "react";
 import { useTranslations } from "next-intl";
-import { Bookmark, BookmarkCheck, Copy, Loader2, Pause, Play, Share2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, BookOpen, Copy, Loader2, Pause, Play, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IconButton } from "./quran-ui";
 
 export interface AyahHandlers {
   onPlay: (surah: number, ayah: number) => void;
+  onTafsir: (surah: number, ayah: number) => void;
   onBookmark: (surah: number, ayah: number) => void;
   onCopy: (surah: number, ayah: number) => void;
   onShare: (surah: number, ayah: number) => void;
 }
 
-/** play/bookmark/copy/share row, shared by the ayah cards and the page-reader panel. */
+/** play/tafsir/bookmark/copy/share row, shared by the ayah cards and the page-reader panel. */
 export function AyahActions({
   surah,
   ayah,
@@ -21,6 +22,7 @@ export function AyahActions({
   loading,
   bookmarked,
   handlers,
+  labelledTafsir = false,
 }: {
   surah: number;
   ayah: number;
@@ -28,6 +30,8 @@ export function AyahActions({
   loading: boolean;
   bookmarked: boolean;
   handlers: AyahHandlers;
+  /** Show the tafsir action as a text button instead of an icon (the page-reader panel, where it is the main action). */
+  labelledTafsir?: boolean;
 }) {
   const t = useTranslations("quran");
   return (
@@ -35,6 +39,20 @@ export function AyahActions({
       <IconButton label={playing ? t("pause") : t("play")} onClick={() => handlers.onPlay(surah, ayah)} pressed={playing}>
         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
       </IconButton>
+      {labelledTafsir ? (
+        <button
+          type="button"
+          onClick={() => handlers.onTafsir(surah, ayah)}
+          className="mx-1 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+        >
+          <BookOpen className="h-4 w-4" />
+          {t("tafsir")}
+        </button>
+      ) : (
+        <IconButton label={t("tafsir")} onClick={() => handlers.onTafsir(surah, ayah)}>
+          <BookOpen className="h-5 w-5" />
+        </IconButton>
+      )}
       <IconButton
         label={bookmarked ? t("removeBookmark") : t("addBookmark")}
         onClick={() => handlers.onBookmark(surah, ayah)}
@@ -98,7 +116,17 @@ export const AyahCard = memo(function AyahCard({
         </span>
         <AyahActions surah={surah} ayah={n} playing={playing} loading={loading} bookmarked={bookmarked} handlers={handlers} />
       </div>
-      <p lang="ar" dir="rtl" className="font-quran text-ink" style={{ fontSize: `${fontRem}rem`, lineHeight: 2.1 }}>
+      {/* Clicking the ayah opens its tafsir, unless the reader is selecting text to copy it. The tafsir button covers keyboard users. */}
+      <p
+        lang="ar"
+        dir="rtl"
+        className="font-quran cursor-pointer text-ink"
+        style={{ fontSize: `${fontRem}rem`, lineHeight: 2.1 }}
+        onClick={() => {
+          if (window.getSelection()?.toString()) return;
+          handlers.onTafsir(surah, n);
+        }}
+      >
         {text}
       </p>
       {showTranslation && (
