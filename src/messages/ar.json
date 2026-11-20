@@ -125,6 +125,10 @@
     "quran": {
       "title": "القرآن الكريم",
       "description": "المصحف الشريف كاملاً للقراءة والاستماع والبحث، بالرسم العثماني وترجمة إنجليزية."
+    },
+    "thought": {
+      "title": "الأذكار والأدعية",
+      "description": "حصن المسلم كاملاً: أذكار الصباح والمساء والنوم والصلاة وغيرها، مع الفضل والدليل وعدّاد تفاعلي."
     }
   },
   "common": {
@@ -222,5 +226,57 @@
     "credits": "النص بالرسم العثماني (موسوعة القرآن الكريم QuranEnc عبر quran-json) · الترجمة الإنجليزية: Saheeh International · التفسير: الميسر والسعدي وابن كثير (عربي) وابن كثير والجلالين (إنجليزي) عبر Tafsir API (رخصة MIT) من موارد QUL (Tarteel) و altafsir.com · الخط: Scheherazade New (SIL OFL) · الصوت: cdn.islamic.network و everyayah.com · ترقيم الصفحات وفق مصحف المدينة النبوية (604 صفحات).",
     "metaSurah": "سورة {name} — {count} آية، {type}. اقرأ واستمع مع الترجمة.",
     "metaPage": "صفحة {page} من المصحف الشريف (الجزء {juz}) — اقرأ واستمع."
+  },
+  "adhkar": {
+    "title": "الأذكار والأدعية",
+    "subtitle": "حصن المسلم كاملاً: أذكار اليوم والليلة والمناسبات، ومع كل ذكر فضله وما يحفظ منه ودليله",
+    "searchLabel": "البحث في الأذكار",
+    "searchPlaceholder": "ابحث في نصوص الأذكار أو أسماء الأبواب",
+    "searching": "جارٍ البحث…",
+    "noResults": "لا توجد نتائج مطابقة",
+    "searchError": "تعذّر البحث، حاول مرة أخرى",
+    "moreResults": "توجد نتائج أخرى — دقّق كلمات البحث",
+    "stats": "{categories} باباً · {items} ذكراً ودعاءً",
+    "quickMorning": "أذكار الصباح",
+    "quickEvening": "أذكار المساء",
+    "quickSleep": "أذكار النوم",
+    "quickAfterPrayer": "أذكار بعد الصلاة",
+    "allGroups": "كل الأنواع",
+    "itemsCount": "{count} ذكر",
+    "progressShort": "{done}/{total}",
+    "completedToday": "اكتمل اليوم",
+    "dailyReset": "يُعاد العدّ تلقائياً كل يوم، ويُحفظ على جهازك فقط.",
+    "arabicOnly": "نصوص الأذكار والملاحظات بالعربية.",
+    "breadcrumb": "الأذكار والأدعية",
+    "backToAll": "كل الأذكار",
+    "progress": "أتممت {done} من {total}",
+    "resetCategory": "إعادة ضبط الباب",
+    "resetItem": "إعادة العدّ",
+    "tapToCount": "اضغط للعدّ",
+    "markDone": "اضغط عند الانتهاء",
+    "doneLabel": "تم",
+    "counterLabel": "{done} من {count}",
+    "repeatTimes": "يُكرَّر {count} مرة",
+    "repeatOnce": "مرة واحدة",
+    "fontSize": "حجم الخط",
+    "decrease": "تصغير",
+    "increase": "تكبير",
+    "copy": "نسخ الذكر",
+    "copied": "تم النسخ",
+    "copyFailed": "تعذّر النسخ",
+    "source": "التخريج",
+    "sourceHisn": "المصدر: كتاب حصن المسلم",
+    "kindFadl": "الفضل والثواب",
+    "kindSunnah": "من السنة",
+    "kindMeaning": "المعنى والفائدة",
+    "evidence": "الدليل",
+    "openHadith": "افتح الحديث",
+    "prevCategory": "الباب السابق",
+    "nextCategory": "الباب التالي",
+    "allDone": "ما شاء الله! أتممت أذكار هذا الباب.",
+    "itemNumber": "ذكر {n}",
+    "noteHelp": "«الفضل» يُذكر فقط حين يصرّح به الحديث ويُعرض دليله؛ وما لم يرد فيه فضل مخصوص نبيّن «السنة» أو «المعنى» دون ادّعاء ثواب.",
+    "credits": "نصوص الأذكار وعدد مرات التكرار من كتاب «حصن المسلم» عبر مجموعتي Adhkar-json وazkar-db، وأذكار الصباح والمساء وتخريجها من Seen-Arabic (MIT). ربطنا كل فضل مذكور بحديثه من مكتبة الأحاديث في الموقع، وأرقام الأحاديث وفق sunnah.com.",
+    "metaCategory": "{title} — أذكار وأدعية من حصن المسلم مع الفضل والدليل."
   }
 }
