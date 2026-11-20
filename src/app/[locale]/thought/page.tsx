@@ -1,60 +1,37 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
-import { buildAlternates } from "@/lib/page-metadata";
-import { Container } from "@/components/ui/container";
 import { SparklesIcon } from "@heroicons/react/24/solid";
+import { buildPageMetadata } from "@/lib/page-metadata";
+import { Container } from "@/components/ui/container";
+import { AdhkarHub } from "@/components/adhkar/adhkar-hub";
+import { getHub } from "@/lib/adhkar/data";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  return { 
-    alternates: buildAlternates(locale, "/thought"),
-    title: locale === "ar" ? "الأذكار والأدعية" : "Remembrance & Supplications",
-  };
+  return buildPageMetadata(locale, "thought");
 }
 
-export default async function ThoughtPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function ThoughtPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: "adhkar" });
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="py-16 sm:py-20 bg-gradient-to-b from-primary-subtle to-background border-b border-border">
+      <section className="border-b border-border bg-gradient-to-b from-primary-subtle to-background py-14 sm:py-16">
         <Container>
-          <div className="flex flex-col items-center text-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <SparklesIcon className="w-10 h-10 text-primary" />
+          <div className="flex flex-col items-center gap-5 text-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+              <SparklesIcon className="h-10 w-10 text-primary" />
             </div>
             <div>
-              <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl text-ink mb-4">
-                {locale === "ar" ? "الأذكار والأدعية" : "Remembrance & Supplications"}
-              </h1>
-              <p className="text-base sm:text-lg text-ink-muted max-w-2xl mx-auto">
-                {locale === "ar"
-                  ? "أذكار وأدعية مأثورة من الكتاب والسنة"
-                  : "Authentic remembrance and supplications from Quran and Sunnah"}
-              </p>
+              <h1 className="font-display mb-3 text-3xl text-ink sm:text-4xl lg:text-5xl">{t("title")}</h1>
+              <p className="mx-auto max-w-2xl text-base text-ink-muted sm:text-lg">{t("subtitle")}</p>
             </div>
           </div>
         </Container>
       </section>
-
-      {/* Content Section */}
-      <section className="py-12 sm:py-16">
-        <Container>
-          <div className="text-center py-20">
-            <p className="text-ink-muted">
-              {locale === "ar" 
-                ? "المحتوى قريباً..." 
-                : "Content coming soon..."}
-            </p>
-          </div>
-        </Container>
-      </section>
+      <AdhkarHub locale={locale} groups={getHub()} />
     </div>
   );
 }

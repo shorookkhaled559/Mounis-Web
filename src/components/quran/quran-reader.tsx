@@ -37,6 +37,7 @@ import type { ReaderSection } from "@/lib/quran/types";
 import { AyahActions, AyahCard, type AyahHandlers } from "./ayah-card";
 import { AyahMarker } from "./ayah-marker";
 import { IconButton, Segmented, Switch } from "./quran-ui";
+import { TafsirDialog } from "./tafsir-dialog";
 import { useAyahPlayer } from "./use-ayah-player";
 
 /** Arabic font size ladder (rem) behind the A- / A+ buttons. */
@@ -67,6 +68,7 @@ export function QuranReader({ locale, mode, sections, page, juz, prev, next }: Q
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selected, setSelected] = useState<{ surah: number; ayah: number } | null>(null);
+  const [tafsirTarget, setTafsirTarget] = useState<{ surah: number; ayah: number } | null>(null);
   const [notice, setNotice] = useState("");
   const noticeTimer = useRef<number | undefined>(undefined);
 
@@ -266,6 +268,7 @@ export function QuranReader({ locale, mode, sections, page, juz, prev, next }: Q
   const handlers = useMemo<AyahHandlers>(
     () => ({
       onPlay: handlePlay,
+      onTafsir: (surah, ayah) => setTafsirTarget({ surah, ayah }),
       onBookmark: (surah, ayah) => toggleBookmarkAt(surah, ayah),
       onCopy: (surah, ayah) => void copyText(`${ayahText(surah, ayah)}\n${ayahUrl(surah, ayah)}`, t("copied")),
       onShare: async (surah, ayah) => {
@@ -283,6 +286,13 @@ export function QuranReader({ locale, mode, sections, page, juz, prev, next }: Q
     }),
     [handlePlay, copyText, ayahText, ayahUrl, surahLabel, t],
   );
+
+  // Previous/next ayah inside the tafsir dialog follows the ayahs shown on this page; null at its ends.
+  const tafsirIndex = tafsirTarget ? indexByKey.get(`${tafsirTarget.surah}:${tafsirTarget.ayah}`) : undefined;
+  const tafsirStep = (delta: number) => {
+    const item = tafsirIndex === undefined ? undefined : queue[tafsirIndex + delta];
+    return item ? () => setTafsirTarget({ surah: item.surah, ayah: item.ayah }) : null;
+  };
 
   const isPlayingNow = status === "playing" || status === "loading";
   const listen = () => {
@@ -565,6 +575,7 @@ export function QuranReader({ locale, mode, sections, page, juz, prev, next }: Q
                   loading={curSurah === selected.surah && curAyah === selected.ayah && status === "loading"}
                   bookmarked={isBookmarked(bookmarks, selected.surah, selected.ayah)}
                   handlers={handlers}
+                  labelledTafsir
                 />
               </div>
             </div>
@@ -628,6 +639,15 @@ export function QuranReader({ locale, mode, sections, page, juz, prev, next }: Q
           {notice}
         </div>
       )}
+
+      <TafsirDialog
+        target={tafsirTarget}
+        locale={locale}
+        ayahText={tafsirTarget ? (ayahByKey.get(`${tafsirTarget.surah}:${tafsirTarget.ayah}`)?.text ?? "") : ""}
+        onClose={() => setTafsirTarget(null)}
+        onPrev={tafsirStep(-1)}
+        onNext={tafsirStep(1)}
+      />
     </div>
   );
 }
