@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Container } from "@/components/ui/container";
 import { HadithCollectionCard } from "@/components/sections/hadith-collection-card";
+import { HadithSearch } from "@/components/sections/hadith-search";
 import { Search } from "lucide-react";
 import type { CollectionSummary } from "@/types/hadith";
 
@@ -83,7 +84,7 @@ export function HadithPageClient({ collections, locale }: HadithPageClientProps)
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={isArabic ? 'ابحث في نصوص الأحاديث أو اسم الكتاب ...' : 'Search hadith text or book name...'}
+                placeholder={isArabic ? 'ابحث عن كتاب أو مؤلف ...' : 'Find a book or author...'}
                 className="w-full rounded-lg border border-border bg-surface py-4 ps-12 pe-4 text-ink shadow-md placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
@@ -92,6 +93,9 @@ export function HadithPageClient({ collections, locale }: HadithPageClientProps)
       </div>
 
       <Container className="py-8 space-y-10">
+        {/* Search inside the hadith texts (the box above only filters the list of books) */}
+        <HadithSearch locale={locale} options={collections} />
+
         {/* No Results Message */}
         {filteredCollections.length === 0 && (
           <div className="text-center py-12">

@@ -7,6 +7,7 @@ import { BookOpen, User } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { buildAlternates } from "@/lib/page-metadata";
 import { routing } from "@/i18n/routing";
+import { HadithSearch } from "@/components/sections/hadith-search";
 
 // Collection listings are cheap and few (one per collection and locale), so
 // they are built ahead of time instead of parsing a multi-MB file per request.
@@ -93,6 +94,9 @@ export default async function CollectionPage({
           </span>
         </div>
       </div>
+
+      {/* Search inside this collection: words from the hadith, or its number */}
+      <HadithSearch locale={locale} fixedCollection={collectionId} />
 
       {/* Books Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
