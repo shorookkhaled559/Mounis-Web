@@ -20,33 +20,34 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"];
 
-export function ZakatCalculator({ locale }: { locale: string }) {
+export function ZakatCalculator({ locale, title }: { locale: string; title: string }) {
   const c = getZakatCopy(locale);
   const [tab, setTab] = useState<TabKey>("money");
 
   return (
-    <section className="bg-background py-10 sm:py-14">
+    <section className="zakat-surface py-8 sm:py-12">
       <Container>
-        <div role="tablist" aria-label={c.tabs.money} className="mb-6 flex flex-wrap gap-2">
-          {TABS.map(({ key, Icon }) => {
+        <div role="tablist" aria-label={title} className="mb-6 flex flex-wrap gap-2.5">
+          {TABS.map(({ key, Icon }, i) => {
             const active = tab === key;
             return (
               <button
                 key={key}
+                type="button"
                 role="tab"
                 id={`zakat-tab-${key}`}
                 aria-selected={active}
                 aria-controls={`zakat-panel-${key}`}
                 onClick={() => setTab(key)}
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors",
+                  "inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm transition-colors",
                   active
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-surface text-ink hover:border-primary hover:text-primary",
+                    ? "border-primary-deep bg-primary-deep text-primary-foreground shadow-md shadow-primary/20"
+                    : "border-border/80 bg-surface text-ink shadow-sm hover:border-primary hover:text-primary-deep",
                 )}
               >
                 <Icon className="size-4" aria-hidden />
-                {c.tabs[key]}
+                {i + 1}. {c.tabs[key]}
               </button>
             );
           })}

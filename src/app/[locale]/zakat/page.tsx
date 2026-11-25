@@ -32,7 +32,7 @@ export default async function Page({
         breadcrumb={isArabic ? "حاسبة الزكاة" : "Zakat Calculator"}
         locale={locale}
       />
-      <ZakatCalculator locale={locale} />
+      <ZakatCalculator locale={locale} title={t("title")} />
     </>
   );
 }

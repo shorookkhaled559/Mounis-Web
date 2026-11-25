@@ -12,6 +12,15 @@ const ar = {
     "هذه الحاسبة أداة مساعدة مبنية على أقوال الفقهاء وما استقرت عليه فتاوى دار الإفتاء المصرية، وليست بديلًا عن سؤال أهل العلم في الحالات الخاصة أو المعقدة.",
   results: "النتيجة",
   due: "الزكاة الواجبة",
+  calculate: "احسب زكاتك الآن",
+  resultsEmpty: "ستظهر النتيجة هنا بمجرد إدخال بياناتك.",
+  aside: {
+    tipTitle: "معلومة مهمة",
+    tip: "تُعدّ الزكاة من أركان الإسلام العظيمة، وهي وسيلة للتكافل الاجتماعي ونشر الخير في المجتمع.",
+    whyTitle: "لماذا تحسب زكاتك معنا؟",
+    why: ["سهولة وسرعة في الحساب", "حساب مبني على فتاوى دار الإفتاء المصرية", "تعينك على إخراج زكاتك على الوجه الصحيح"],
+    closing: "معًا .. نحقق مجتمعًا أكثر عطاءً",
+  },
   money: {
     title: "زكاة المال والذهب والتجارة",
     intro: "الزكاة 2.5% من صافي المال إذا بلغ النصاب ومرّ عليه عام هجري كامل وكان زائدًا عن الحوائج الأصلية.",
@@ -116,6 +125,15 @@ const en: ZakatCopy = {
     "This calculator is a helper based on the views of the jurists and the fatwas of Egypt's Dar al-Ifta. It does not replace asking a qualified scholar about special or complex cases.",
   results: "Result",
   due: "Zakat due",
+  calculate: "Calculate my zakat",
+  resultsEmpty: "Your result will appear here as soon as you enter your figures.",
+  aside: {
+    tipTitle: "Good to know",
+    tip: "Zakat is one of the great pillars of Islam. It is a way of caring for one another and spreading good in the community.",
+    whyTitle: "Why calculate your zakat here?",
+    why: ["Quick and easy to calculate", "Based on the fatwas of Egypt's Dar al-Ifta", "Helps you pay your zakat the right way"],
+    closing: "Together, a more giving community",
+  },
   money: {
     title: "Zakat on wealth, gold and trade",
     intro:
