@@ -1,72 +1,27 @@
 import Image from "next/image";
-import { Container } from "@/components/ui/container";
+import { LeafSprig } from "./prayer-art";
 
 interface PrayerStyleHeroProps {
+  /** the page's real <h1> – kept for SEO / screen readers, visually hidden */
   title: string;
-  description?: string;
-  breadcrumb: string;
-  locale: string;
 }
 
-export function PrayerStyleHero({
-  title,
-  description,
-  breadcrumb,
-  locale,
-}: PrayerStyleHeroProps) {
-  const isArabic = locale === "ar";
-
+/** Slim photo strip at the very top of the prayer page (window + mosque). */
+export function PrayerStyleHero({ title }: PrayerStyleHeroProps) {
   return (
-    <div className="relative overflow-hidden min-h-[40svh] sm:min-h-[50svh] md:min-h-[60svh] flex items-center">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        <Image
-          src="/prayer/background.png"
-          alt=""
-          fill
-          priority
-          className="object-cover object-center"
-        />
-      </div>
-
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black/20" />
-
-      {/* Content */}
-      <Container className="relative z-10 py-8 md:py-12">
-        <div className="max-w-3xl mx-auto">
-          {/* Breadcrumb */}
-          <div
-            className={`flex items-center gap-2 text-sm text-white/90 my-4 ${
-              isArabic ? "justify-end flex-row-reverse" : "justify-start"
-            }`}
-          >
-            <span className="text-white font-medium">{breadcrumb}</span>
-            <span>•</span>
-            <span>{isArabic ? "الرئيسية" : "Home"}</span>
-          </div>
-
-          {/* Title */}
-          <h1
-            className={`font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3 drop-shadow-lg ${
-              isArabic ? "text-right" : "text-left"
-            }`}
-          >
-            {title}
-          </h1>
-
-          {/* Description */}
-          {description && (
-            <p
-              className={`text-lg md:text-xl text-white/95 mb-4 drop-shadow-md ${
-                isArabic ? "text-right" : "text-left"
-              }`}
-            >
-              {description}
-            </p>
-          )}
-        </div>
-      </Container>
+    <div className="relative h-24 overflow-hidden sm:h-28 lg:h-32">
+      <Image
+        src="/prayer/background.png"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-[left_18%]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/70" />
+      <h1 className="sr-only">{title}</h1>
+      <LeafSprig className="pointer-events-none absolute bottom-0 left-0 hidden h-16 w-24 -scale-x-100 text-primary-deep/70 sm:block" />
+      <LeafSprig className="pointer-events-none absolute bottom-0 right-0 hidden h-16 w-24 text-primary-deep/70 sm:block" />
     </div>
   );
 }

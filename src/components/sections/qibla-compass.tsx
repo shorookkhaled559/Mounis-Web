@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { MapPin, Loader2, AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import geomagnetism from "geomagnetism";
 import { angleDiff, calcQibla, headingFromEuler, norm360, toDeg, toRad } from "@/lib/qibla";
+import { PrayerCard, CardHeading } from "./prayer-card";
 
 /** Magnetic declination (degrees, east positive) at a location. */
 function getDeclination(lat: number, lng: number): number {
@@ -14,7 +16,7 @@ function getDeclination(lat: number, lng: number): number {
   }
 }
 
-type Status = "idle" | "loading" | "active" | "error";
+type Status = "idle" | "loading" | "error";
 type IOSOrientationEvent = DeviceOrientationEvent & {
   webkitCompassHeading?: number;
   webkitCompassAccuracy?: number;
@@ -24,16 +26,23 @@ type IOSDeviceOrientation = {
 };
 
 interface QiblaCompassProps {
-  locale: string;
+  /** the currently selected location (city or GPS) */
+  lat: number;
+  lng: number;
+  /** called with the device position after the user taps "use my location" */
+  onLocate: (lat: number, lng: number) => void;
 }
 
-export function QiblaCompass({ locale }: QiblaCompassProps) {
-  const isArabic = locale === "ar";
+export function QiblaCompass({ lat, lng, onLocate }: QiblaCompassProps) {
+  const t = useTranslations("prayerPage");
 
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [qiblaDeg, setQiblaDeg] = useState(0); // from TRUE north
-  const [declination, setDeclination] = useState(0);
+
+  // The bearing is known from the selected location straight away; the sensor
+  // only adds the live rotation.
+  const qiblaDeg = useMemo(() => calcQibla(lat, lng), [lat, lng]);
+  const declination = useMemo(() => getDeclination(lat, lng), [lat, lng]);
 
   // sensor state
   const [sensorOn, setSensorOn] = useState(false);
@@ -43,8 +52,8 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
   const [aligned, setAligned] = useState(false);
 
   // Refs hold the latest values so the event listener never goes stale.
-  const declinationRef = useRef(0);
-  const qiblaRef = useRef(0);
+  const declinationRef = useRef(declination);
+  const qiblaRef = useRef(qiblaDeg);
   const smoothRef = useRef<{ x: number; y: number } | null>(null);
   const dialRef = useRef(0);
   const rafRef = useRef<number | null>(null);
@@ -57,7 +66,7 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
 
   // ── Device orientation listener ──────────────────────────────────────────
   // Subscribed ONCE when sensorOn flips to true. It reads everything from refs,
-  // so it never needs to be re-created (this was the original bug).
+  // so it never needs to be re-created.
   useEffect(() => {
     if (!sensorOn) return;
 
@@ -150,19 +159,18 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
     // 2) Location
     if (!navigator.geolocation) {
       setStatus("error");
-      setErrorMsg(isArabic ? "المتصفح لا يدعم تحديد الموقع" : "Geolocation not supported");
+      setErrorMsg(t("geoUnsupported"));
       return;
     }
     setStatus("loading");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        const deg = calcQibla(coords.latitude, coords.longitude);
-        const decl = getDeclination(coords.latitude, coords.longitude);
-        declinationRef.current = decl;
-        qiblaRef.current = deg;
-        setDeclination(decl);
-        setQiblaDeg(deg);
-        setStatus("active");
+        // refs first so the very next sensor event already uses the new bearing
+        qiblaRef.current = calcQibla(coords.latitude, coords.longitude);
+        declinationRef.current = getDeclination(coords.latitude, coords.longitude);
+        onLocate(coords.latitude, coords.longitude);
+        setStatus("idle");
+        setErrorMsg("");
         if (sensorAllowed) {
           setHasOrientation(null);
           setSensorOn(true);
@@ -172,74 +180,48 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
       },
       (err) => {
         setStatus("error");
-        setErrorMsg(
-          err.code === 1
-            ? isArabic
-              ? "تم رفض الإذن. يرجى السماح بالوصول للموقع."
-              : "Permission denied. Please allow location access."
-            : isArabic
-            ? "تعذّر تحديد موقعك، حاول مرة أخرى."
-            : "Could not get your location. Please try again."
-        );
+        setErrorMsg(err.code === 1 ? t("geoDenied") : t("geoFailed"));
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [isArabic]);
+  }, [t, onLocate]);
 
   // ── Geometry ──────────────────────────────────────────────────────────────
-  // The whole dial (ticks, N/E/S/W, Kaaba marker) rotates by -heading, so "N"
-  // always points to real north. The Kaaba marker sits on the dial at qiblaDeg.
-  // The fixed pointer at the top of the screen = where the phone is facing.
-  // When the Kaaba marker reaches the top pointer → you are facing the Qibla.
+  // The whole dial (ticks, N/E/S/W, arrow) rotates by -heading, so "N" always
+  // points to real north. The arrow sits on the dial at qiblaDeg. The fixed
+  // pointer at the top = where the phone is facing. Arrow under the pointer →
+  // you are facing the Qibla.
   // how many degrees you still need to turn: + = right, - = left
   const turnBy = angleDiff(qiblaDeg, norm360(-dialAngle));
-  const kaabaAngleRad = toRad(qiblaDeg);
-  const kaabaR = 100;
-  const kaabaX = 128 + kaabaR * Math.sin(kaabaAngleRad);
-  const kaabaY = 128 - kaabaR * Math.cos(kaabaAngleRad);
 
-  // Tick marks
-  const ticks = Array.from({ length: 60 }, (_, i) => {
-    const isMajor = i % 5 === 0;
-    const angle = (i * 6 * Math.PI) / 180;
-    const r1 = isMajor ? 108 : 113;
-    const r2 = 120;
-    return { angle, isMajor, r1, r2 };
+  const ticks = Array.from({ length: 72 }, (_, i) => {
+    const isMajor = i % 6 === 0;
+    const angle = (i * 5 * Math.PI) / 180;
+    return { angle, isMajor, r1: isMajor ? 108 : 113, r2: 118 };
   });
 
-  return (
-    <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 flex flex-col gap-5 h-full">
+  const ring = aligned ? "#2e7d32" : "var(--primary)";
+  const arrow = aligned ? "#2e7d32" : "var(--primary)";
 
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <svg className="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <polygon points="12,2 14.5,9.5 12,8 9.5,9.5" fill="currentColor" stroke="none" />
-            <polygon points="12,22 14.5,14.5 12,16 9.5,14.5" fill="#ccc" stroke="none" />
+  return (
+    <PrayerCard className="flex h-full flex-col gap-5 p-6">
+      <CardHeading
+        icon={
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m15.5 8.5-2 5-5 2 2-5z" />
           </svg>
-        </div>
-        <div>
-          <h2 className="font-display text-lg font-bold text-ink">
-            {isArabic ? "اتجاه القبلة" : "Qibla Direction"}
-          </h2>
-          <p className="text-xs text-ink-muted">
-            {isArabic
-              ? "حدد موقعك وحرّك جهازك نحو القبلة"
-              : "Set your location and rotate toward Qibla"}
-          </p>
-        </div>
-      </div>
+        }
+        title={t("qiblaTitle")}
+        subtitle={t("qiblaSubtitle")}
+      />
 
       {/* Compass */}
-      <div className="flex flex-col items-center gap-3 flex-1 justify-center" dir="ltr">
-        <div className="relative w-64 h-64">
-          <svg viewBox="0 0 256 256" className="w-full h-full">
-
-            {/* Outer ring (fixed) */}
-            <circle cx="128" cy="128" r="122" fill="none"
-              stroke={aligned ? "#2e7d32" : "#4f9d2f"} strokeWidth="8" />
-            <circle cx="128" cy="128" r="118" fill="white" />
+      <div className="flex flex-1 flex-col items-center justify-center gap-3" dir="ltr">
+        <div className="relative aspect-square w-full max-w-[15rem]">
+          <svg viewBox="0 0 256 256" className="h-full w-full" role="img" aria-label={t("compassAria")}>
+            <circle cx="128" cy="128" r="124" fill="var(--surface)" stroke={ring} strokeWidth="5" />
+            <circle cx="128" cy="128" r="119" fill="none" stroke="var(--border)" strokeWidth="1" />
 
             {/* ── Rotating dial ── */}
             <g
@@ -249,184 +231,108 @@ export function QiblaCompass({ locale }: QiblaCompassProps) {
                 transition: "transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
-              {/* Subtle wind-rose */}
-              {[0, 45, 90, 135].map((a) => {
-                const rad = toRad(a);
-                return (
-                  <line key={a}
-                    x1={128 + 90 * Math.sin(rad)} y1={128 - 90 * Math.cos(rad)}
-                    x2={128 - 90 * Math.sin(rad)} y2={128 + 90 * Math.cos(rad)}
-                    stroke="#e8f3df" strokeWidth="1"
-                  />
-                );
-              })}
-
-              {/* Tick marks */}
               {ticks.map(({ angle, isMajor, r1, r2 }, i) => (
                 <line key={i}
                   x1={128 + r2 * Math.sin(angle)} y1={128 - r2 * Math.cos(angle)}
                   x2={128 + r1 * Math.sin(angle)} y2={128 - r1 * Math.cos(angle)}
-                  stroke={isMajor ? "#4f9d2f" : "#dce5d8"}
-                  strokeWidth={isMajor ? 2 : 1}
+                  stroke={isMajor ? "var(--primary)" : "var(--border)"}
+                  strokeWidth={isMajor ? 1.6 : 1}
                 />
               ))}
 
               {/* Cardinal letters (counter-rotated so they stay readable) */}
               {[
-                { label: "N", dx: 0,   dy: -88, color: "#e53935" },
-                { label: "S", dx: 0,   dy:  88, color: "#18321f" },
-                { label: "W", dx: -88, dy:   0, color: "#18321f" },
-                { label: "E", dx: 88,  dy:   0, color: "#18321f" },
+                { label: t("dirN"), dx: 0,   dy: -92, color: "#e53935" },
+                { label: t("dirS"), dx: 0,   dy:  92, color: "var(--ink)" },
+                { label: t("dirW"), dx: -92, dy:   0, color: "var(--ink)" },
+                { label: t("dirE"), dx: 92,  dy:   0, color: "var(--ink)" },
               ].map(({ label, dx, dy, color }) => (
-                <text key={label}
+                <text key={dy + "," + dx}
                   x={128 + dx} y={128 + dy}
-                  textAnchor="middle" dominantBaseline="middle"
-                  fontSize="12" fontWeight="700" fill={color}
+                  textAnchor="middle" dominantBaseline="central"
+                  fontSize="13" fontWeight="700" fill={color}
                   transform={`rotate(${-dialAngle} ${128 + dx} ${128 + dy})`}
                 >
                   {label}
                 </text>
               ))}
 
-              {status === "active" && (
-                <>
-                  {/* Big arrow pointing to the Kaaba (rotates with the dial) */}
-                  <g
-                    style={{
-                      transformOrigin: "128px 128px",
-                      transform: `rotate(${qiblaDeg}deg)`,
-                    }}
-                  >
-                    <polygon
-                      points="128,52 144,92 134,92 134,128 122,128 122,92 112,92"
-                      fill={aligned ? "#2e7d32" : "#e53935"}
-                      opacity="0.9"
-                    >
-                      {!aligned && (
-                        <animate attributeName="opacity" values="0.95;0.55;0.95"
-                          dur="1.6s" repeatCount="indefinite" />
-                      )}
-                    </polygon>
-                  </g>
-                  {/* Kaaba icon (upright regardless of dial rotation) */}
-                  <g transform={`translate(${kaabaX}, ${kaabaY}) rotate(${-dialAngle}) translate(-12, -12)`}
-                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }}
-                  >
-                    <rect x="0" y="4" width="24" height="18" rx="1" fill="#1a1a2e" />
-                    <rect x="0" y="4" width="24" height="5" fill="#2d2d4e" />
-                    <rect x="0" y="8" width="24" height="2" fill="#c8a951" />
-                    <rect x="8" y="14" width="8" height="8" rx="1" fill="#c8a951" />
-                    <rect x="9" y="15" width="6" height="7" rx="0.5" fill="#8b6914" />
-                    <rect x="0" y="0" width="24" height="5" rx="1" fill="#111" opacity="0.7" />
-                  </g>
-                </>
-              )}
+              {/* Arrow toward the Kaaba (rotates with the dial) */}
+              <g style={{ transformOrigin: "128px 128px", transform: `rotate(${qiblaDeg}deg)` }}>
+                <polygon points="128,46 142,92 128,84 114,92" fill={arrow} />
+                <rect x="126" y="84" width="4" height="22" rx="2" fill={arrow} />
+              </g>
+            </g>
+
+            {/* Kaaba (centre, always upright) */}
+            <g transform="translate(110 110)">
+              <rect x="1" y="3" width="34" height="32" rx="3" fill="#111" />
+              <rect x="1" y="3" width="34" height="9" rx="3" fill="#2a2a2a" />
+              <rect x="1" y="14" width="34" height="4" fill="#c8a951" />
+              <rect x="12" y="22" width="12" height="13" rx="1.5" fill="#c8a951" />
+              <rect x="14" y="24" width="8" height="11" rx="1" fill="#8b6914" />
             </g>
 
             {aligned && (
-              <circle cx="128" cy="128" r="118" fill="none" stroke="#2e7d32" strokeWidth="3">
-                <animate attributeName="r" values="118;126;118" dur="1.2s" repeatCount="indefinite" />
+              <circle cx="128" cy="128" r="119" fill="none" stroke="#2e7d32" strokeWidth="3">
                 <animate attributeName="opacity" values="0.9;0.2;0.9" dur="1.2s" repeatCount="indefinite" />
               </circle>
             )}
 
-            {/* ── Fixed pointer = where the phone is facing ── */}
-            <polygon
-              points="128,8 119,28 137,28"
-              fill={aligned ? "#2e7d32" : status === "active" ? "#e53935" : "#cccccc"}
-            />
-            <circle cx="128" cy="128" r="5" fill="white"
-              stroke={aligned ? "#2e7d32" : "#4f9d2f"} strokeWidth="2" />
+            {/* Fixed pointer = where the phone is facing */}
+            {sensorOn && hasOrientation && (
+              <polygon points="128,6 121,20 135,20" fill={aligned ? "#2e7d32" : "#e53935"} />
+            )}
           </svg>
 
-          {/* Loading overlay */}
           {status === "loading" && (
-            <div className="absolute inset-0 rounded-full bg-surface/70 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-surface/70">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           )}
         </div>
 
-        {/* Status text */}
-        <div className="text-center min-h-[2.5rem]">
-          {status === "active" && (
-            <>
-              <p className="font-display text-3xl font-bold text-ink">{Math.round(qiblaDeg)}°</p>
-              {hasOrientation === false && (
-                <p className="text-xs text-amber-600 mt-1 flex items-center justify-center gap-1">
-                  <span>⚠️</span>
-                  {isArabic
-                    ? "لا يتوفر حساس بوصلة (جرّب من هاتف محمول وعبر HTTPS) — الاتجاه ثابت من الشمال"
-                    : "No compass sensor available (use a phone over HTTPS) — direction is fixed from North"}
-                </p>
-              )}
-              {hasOrientation === true && aligned && (
-                <p className="text-sm font-semibold text-green-700 mt-1">
-                  {isArabic ? "✓ أنت في اتجاه القبلة" : "✓ You are facing the Qibla"}
-                </p>
-              )}
-              {hasOrientation === true && !aligned && (
-                <p className="text-sm font-semibold text-primary mt-1 flex items-center justify-center gap-2">
-                  <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  {turnBy > 0
-                    ? isArabic
-                      ? `لُفّ يميناً ${Math.round(Math.abs(turnBy))}° ➜`
-                      : `Turn right ${Math.round(Math.abs(turnBy))}° ➜`
-                    : isArabic
-                    ? `⬅ لُفّ يساراً ${Math.round(Math.abs(turnBy))}°`
-                    : `⬅ Turn left ${Math.round(Math.abs(turnBy))}°`}
-                </p>
-              )}
-              {needsCalibration && (
-                <p className="text-xs text-amber-600 mt-1">
-                  {isArabic
-                    ? "تحتاج البوصلة إلى معايرة: حرّك الهاتف على شكل الرقم 8"
-                    : "Calibrate: move your phone in a figure-8 motion"}
-                </p>
-              )}
-            </>
-          )}
-          {status === "idle" && (
-            <p className="text-sm text-ink-muted">
-              {isArabic ? "اضغط الزر أدناه لتحديد اتجاه القبلة" : "Press the button to find Qibla direction"}
-            </p>
-          )}
-          {status === "loading" && (
-            <p className="text-sm text-ink-muted">
-              {isArabic ? "جاري تحديد موقعك..." : "Getting your location..."}
-            </p>
-          )}
+        {/* Live guidance */}
+        <div className="min-h-[1.25rem] text-center" dir="auto" aria-live="polite">
+          {status === "loading" && <p className="text-xs text-ink-muted">{t("geoLoading")}</p>}
           {status === "error" && (
-            <p className="text-sm text-red-500 flex items-center justify-center gap-1">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <p className="flex items-center justify-center gap-1 text-xs text-red-600">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
               {errorMsg}
             </p>
           )}
+          {status === "idle" && sensorOn && hasOrientation === false && (
+            <p className="text-xs text-amber-600">{t("noSensor")}</p>
+          )}
+          {status === "idle" && hasOrientation === true && aligned && (
+            <p className="text-sm font-semibold text-green-700">✓ {t("aligned")}</p>
+          )}
+          {status === "idle" && hasOrientation === true && !aligned && (
+            <p className="text-sm font-semibold text-primary">
+              {turnBy > 0 ? t("turnRight", { deg: Math.round(Math.abs(turnBy)) }) : t("turnLeft", { deg: Math.round(Math.abs(turnBy)) })}
+            </p>
+          )}
+          {needsCalibration && <p className="mt-1 text-xs text-amber-600">{t("calibrate")}</p>}
         </div>
       </div>
 
-      {/* CTA */}
-      <button type="button"
+      {/* Bearing from the selected location */}
+      <div className="rounded-2xl bg-surface-raised px-4 py-3 text-center">
+        <p className="text-xs text-ink-muted">{t("qiblaFromHere")}</p>
+        <p className="font-display text-2xl font-bold tabular-nums text-ink" dir="ltr">
+          {Math.round(qiblaDeg)}°
+        </p>
+      </div>
+
+      <button
+        type="button"
         onClick={requestLocation}
         disabled={status === "loading"}
-        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary-deep active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-primary px-5 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary-subtle active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {status === "loading" ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <MapPin className="w-4 h-4" />
-        )}
-        {status === "active"
-          ? isArabic ? "تحديث الموقع" : "Update Location"
-          : isArabic ? "استخدام موقعي الحالي" : "Use My Current Location"}
+        {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+        {sensorOn ? t("updateMyLocation") : t("useMyLocation")}
       </button>
-
-      <p className="text-center text-xs text-ink-muted">
-        <button type="button" className="text-primary hover:underline inline-flex items-center gap-1">
-          <MapPin className="w-3 h-3" />
-          {isArabic ? "أو اختر موقعك يدوياً" : "Or choose location manually"}
-        </button>
-      </p>
-    </div>
+    </PrayerCard>
   );
 }

@@ -22,16 +22,10 @@ export default async function Page({
   setRequestLocale(locale);
 
   const t = await getTranslations({ locale, namespace: "pages.prayer" });
-  const isArabic = locale === "ar";
 
   return (
     <>
-      <PrayerStyleHero
-        title={t("title")}
-        description={t("description")}
-        breadcrumb={isArabic ? "مواقيت الصلاة والقبلة" : "Prayer & Qibla"}
-        locale={locale}
-      />
+      <PrayerStyleHero title={t("title")} />
       <PrayerSection locale={locale} />
     </>
   );
