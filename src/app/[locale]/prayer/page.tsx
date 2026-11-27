@@ -1,7 +1,7 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/page-metadata";
-import { PrayerStyleHero } from "@/components/sections/prayer-style-hero";
+import { HadithStyleHero } from "@/components/sections/hadith-style-hero";
 import { PrayerSection } from "@/components/sections/prayer-section";
 
 export async function generateMetadata({
@@ -22,10 +22,16 @@ export default async function Page({
   setRequestLocale(locale);
 
   const t = await getTranslations({ locale, namespace: "pages.prayer" });
+  const isArabic = locale === "ar";
 
   return (
     <>
-      <PrayerStyleHero title={t("title")} />
+      <HadithStyleHero
+        title={t("title")}
+        description={t("description")}
+        breadcrumb={isArabic ? "مواقيت الصلاة والقبلة" : "Prayer & Qibla"}
+        locale={locale}
+      />
       <PrayerSection locale={locale} />
     </>
   );
