@@ -8,7 +8,11 @@ import { FeaturedArticles } from "@/components/sections/featured-articles";
 import { Newsletter } from "@/components/sections/newsletter";
 import { DidYouKnow } from "@/components/sections/did-you-know";
 import { CTASection } from "@/components/sections/cta-section";
+import { HadithOfTheDay } from "@/components/sections/hadith-of-the-day";
 import { articles, getLatestArticles } from "@/lib/data/articles";
+
+// "Hadith of the day" must change daily, so the cached page is refreshed every 10 minutes.
+export const revalidate = 600;
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -31,6 +35,7 @@ export default async function HomePage({
     <>
       <Hero />
       <DailyArticle articles={latestArticles} />
+      <HadithOfTheDay locale={locale} />
       <Categories />
       <FeaturedArticles articles={featuredArticles} />
       <DidYouKnow />

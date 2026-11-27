@@ -107,6 +107,10 @@ export default async function BookPage({
             key={hadith.hadith_number}
             hadith={hadith}
             locale={locale}
+            collectionId={collectionId}
+            collectionNameAr={collection.collection.name_ar}
+            collectionNameEn={collection.collection.name_en}
+            bookNumber={book.book_number}
           />
         ))}
       </div>
